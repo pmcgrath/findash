@@ -1,4 +1,4 @@
-(ns sq.quotes
+(ns sq.quoteswatcher
   (:require 
     [clojure.core.async :refer [<! >! go-loop timeout]]
     [clojure.tools.logging :as log]

@@ -4,7 +4,7 @@
     [clojure.core.async :refer [<!!]]
     [clojure.tools.logging :as log]
     [sq.hub :as hub]
-    [sq.quotes :as quotes]
+    [sq.quoteswatcher :as quoteswatcher]
     [sq.web :as web]))
 
 (def config { 
@@ -31,7 +31,7 @@
   
   (log/info "Starting quotes watcher")
   (let [quotes-out-ch (hub/get-channel :quotes-out-ch)] 
-    (quotes/start config quotes-out-ch)
+    (quoteswatcher/start config quotes-out-ch)
   )
 
   (log/info "Starting local quotes consumer")
