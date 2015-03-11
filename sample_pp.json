@@ -1,0 +1,39 @@
+{
+	"list" : { 
+		"meta" : { 
+			"type" : "resource-list",
+			"start" : 0,
+			"count" : 2
+		},
+		"resources" : [ 
+			{
+				"resource" : { 
+					"classname" : "Quote",
+					"fields" : { 
+						"name" : "RYANAIR HOLDINGS",
+						"price" : "10.510000",
+						"symbol" : "RY4B.IR",
+						"ts" : "1425987348",
+						"type" : "equity",
+						"utctime" : "2015-03-10T11:35:48+0000",
+						"volume" : "593043"
+					}
+				}		
+			},
+			{
+				"resource" : { 
+					"classname" : "Quote",
+					"fields" : { 
+						"name" : "Microsoft Corporation",
+						"price" : "42.849998",
+						"symbol" : "MSFT",
+						"ts" : "1425931202",
+						"type" : "equity",
+						"utctime" : "2015-03-09T20:00:02+0000",
+						"volume" : "32108986"
+					}
+				}
+			}
+		]	
+	}
+}
