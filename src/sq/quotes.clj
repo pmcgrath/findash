@@ -1,35 +1,34 @@
 (ns sq.quotes
   (:require 
-    [clojure.core.async :refer [<! >! chan go-loop timeout]]
+    [clojure.core.async :refer [<! >! go-loop timeout]]
     [clojure.tools.logging :as log]
     [sq.yahooquotes :as yahooquotes]))
 
-(defn get-acquirer-fn [config]
+(defn get-acquirer-fn 
+  [config]
   (fn []
     (yahooquotes/acquire config)
   )
 )
 
-(defn watch
-  ([config]
-    ; Only config passed so call function with arity 2 supplying the default acquirer function
-    (watch config (get-acquirer-fn config))
+(defn start 
+  ([config out-ch]
+    ; Acquirer function not passed, so call function supplying the default acquirer function
+    (start config out-ch (get-acquirer-fn config))
   )
-  ([config acquirer-fn]
+  ([config out-ch acquirer-fn]
     ; Both config and acquirer function passed
-    (let [out (chan)
-          stocks-count (count (:stocks config))
+    (let [stocks-count (count (:stocks config))
           pause-interval (* (:refresh-interval-seconds config) 1000)]
       (if (> stocks-count 0)
         (go-loop []
           ; Put quotes on out channel and pause
-          (>! out (acquirer-fn))
+          (>! out-ch (acquirer-fn))
           (<! (timeout pause-interval))
           (recur)
         )
         (log/info "No stocks to watch")
       )
-      out
     )
   )
 )

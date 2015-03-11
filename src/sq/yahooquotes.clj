@@ -3,21 +3,25 @@
     [clojure.data.json :as json]
     [clj-time.format :as fmt]))
 
-(defn get-comma-separated-symbols [config] 
+(defn get-comma-separated-symbols
+  [config] 
   (apply str (interpose "," (map (fn [s] (:symbol s)) (:stocks config))))
 )
 
-(defn get-lookup-url [config]
+(defn get-lookup-url
+  [config]
   ; Ignoring url encoding issues, cap on number of symbols that can be looked up and the url length for now
   (str "http://finance.yahoo.com/webservice/v1/symbols/" (get-comma-separated-symbols config) "/quote?format=json")
 )
 
-(defn get-raw [config]
+(defn get-raw
+  [config]
   ; Make web requets and then convert to json - migth be possible to do this in one step
   (json/read-str (slurp (get-lookup-url config)))
 )
 
-(defn parse-raw [quote]
+(defn parse-raw
+  [quote]
   ; Destructure
   ; 	fields var as "resources" internal map and then its "fields" internal map
   ;	symbol, price and utctime vars from within the just destructured fields var
@@ -28,7 +32,8 @@
   )
 )
 
-(defn acquire [config]
+(defn acquire
+  [config]
   ; Get raw quotes
   ; Destructure quotes var as "list" internal map and then its "resources" internal map
   ; Return a vector of quote data
