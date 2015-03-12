@@ -22,10 +22,11 @@
           pause-interval (* (:refresh-interval-seconds config) 1000)]
       (if (> stocks-count 0)
         (go-loop []
-          ; Put quotes on out channel and pause
-          (>! out-ch (acquirer-fn))
-          (<! (timeout pause-interval))
-          (recur)
+          ; Put quotes on out channel and pause, if put on channel returns false we exit
+          (when (>! out-ch (acquirer-fn))
+            (<! (timeout pause-interval))
+            (recur)
+          )
         )
         (log/info "No stocks to watch")
       )

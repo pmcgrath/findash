@@ -6,7 +6,7 @@
     [sq.views :as views]))
 
 (compojure/defroutes routes
-  (compojure/GET "/" [] (views/home-page))
+  (compojure/GET "/" [] views/generate-home-page)
   (route/resources "/")				; How does this work ?
   (route/not-found "Not Found")
 )

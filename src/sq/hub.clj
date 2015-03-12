@@ -6,6 +6,7 @@
 
 (defn init
   []
+  ; Create channels
   (swap! store assoc :quotes-out-ch (chan))
 )
 

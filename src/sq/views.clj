@@ -10,10 +10,11 @@
   ]
 )
 
-(defn home-page
-  []
+(defn generate-home-page
+  [req]
   (page/html5
-    (generate-page-header "Home")
-    [:p "Stock quotes"]
+    (generate-page-header "Home 1")
+    [:h1 "Stock quotes"]
+    [:d (str "Request is " req)]
   )
 )
