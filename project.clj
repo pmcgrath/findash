@@ -14,5 +14,4 @@
                  [ring/ring-jetty-adapter "1.3.2"]]
   :main ^:skip-aot sq.main
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}}
-)
+  :profiles {:uberjar {:aot :all}})

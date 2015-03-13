@@ -1,10 +1,11 @@
-(ns sq.main
+(ns sq.main 
   (:gen-class)
   (:require
-    [clojure.core.async :refer [<!!]]
+    [clojure.core.async :refer [<!! chan tap]]
     [clojure.tools.logging :as log]
     [sq.hub :as hub]
     [sq.quoteswatcher :as quoteswatcher]
+    [sq.store :as store]
     [sq.web :as web]))
 
 (def config { 
@@ -15,9 +16,7 @@
     {:symbol "LLOY.L" :currency "GBP" }
     {:symbol "TSCO.L" :currency "GBP" }
     {:symbol "GOOG" :currency "USD" }
-    {:symbol "MSFT" :currency "USD" }
-  ] 
-})
+    {:symbol "MSFT" :currency "USD" }]})
 
 (defn -main 
   [& args]
@@ -28,18 +27,22 @@
 
   (log/info "Starting web app")
   (web/start (:port config))
-  
+ 
+  (log/info "Starting store")
+  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
+        quotes-ch (tap mult-quotes-ch (chan))] 
+    (store/start config quotes-ch))
+ 
   (log/info "Starting quotes watcher")
-  (let [quotes-out-ch (hub/get-channel :quotes-out-ch)] 
-    (quoteswatcher/start config quotes-out-ch)
-  )
+  (let [quotes-ch (hub/get-item :quotes-ch)] 
+    (quoteswatcher/start config quotes-ch))
 
-  (log/info "Starting local quotes consumer")
-  (let [quotes-out-ch (hub/get-channel :quotes-out-ch)] 
+  (log/info "Starting TEMP local quotes logger")
+  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
+        quotes-ch (tap mult-quotes-ch (chan))] 
     (while true 
-      (let [quotes (<!! quotes-out-ch)]
-        (log/info "Got quotes [" quotes "]")
-      )
-    )
-  )
+      (let [quotes (<!! quotes-ch)]
+        (log/info "TEMP Got quotes [" quotes "]")
+      )))
+  ; What prevents this from indicating the process has completed, background threads ? Threadpool activity ?
 )

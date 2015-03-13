@@ -7,15 +7,12 @@
 (defn get-acquirer-fn 
   [config]
   (fn []
-    (yahooquotes/acquire config)
-  )
-)
+    (yahooquotes/acquire config)))
 
 (defn start 
   ([config out-ch]
     ; Acquirer function not passed, so call function supplying the default acquirer function
-    (start config out-ch (get-acquirer-fn config))
-  )
+    (start config out-ch (get-acquirer-fn config)))
   ([config out-ch acquirer-fn]
     ; Both config and acquirer function passed
     (let [stocks-count (count (:stocks config))
@@ -28,8 +25,4 @@
             (recur)
           )
         )
-        (log/info "No stocks to watch")
-      )
-    )
-  )
-)
+        (log/info "No stocks to watch")))))

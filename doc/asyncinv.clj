@@ -12,11 +12,7 @@
       (println "Stopping")
       (do
         (<! (timeout 200))
-        (recur (inc sequence))
-      )
-    )
-  )
-)
+        (recur (inc sequence))))))
 
 (run-go)
 (<!! (timeout 2000))
@@ -42,12 +38,7 @@
         (println "Producer is exiting go loop as channel is closed")
         (do
           (<! (timeout 200))
-          (recur (inc sequence))
-        )
-      )
-    )
-  )
-)
+          (recur (inc sequence)))))))
 
 (defn run-consumer
   [name ch]
@@ -57,12 +48,7 @@
         (println name "is exiting go loop as channel is closed")
         (do
           (println name "received message [" message "]")
-          (recur)
-        )
-      )
-    )
-  )
-)
+          (recur))))))
 
 (run-consumer "C1" message-ch)
 (run-consumer "C2" message-ch)
@@ -92,12 +78,7 @@
         (println "Producer is exiting go loop as channel is closed")
         (do
           (<! (timeout 200))
-          (recur (inc sequence))
-        )
-      )
-    )
-  )
-)
+          (recur (inc sequence)))))))
 
 (defn run-consumer
   [name ch]
@@ -107,12 +88,7 @@
         (println name "is exiting go loop as channel is closed")
         (do
           (println name "received message [" message "]")
-          (recur)
-        )
-      )
-    )
-  )
-)
+          (recur))))))
 
 (run-consumer "C1" (tap mult-message-ch (chan)))
 (run-consumer "C1" (tap mult-message-ch (chan)))

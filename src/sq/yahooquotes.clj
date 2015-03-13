@@ -5,20 +5,17 @@
 
 (defn get-comma-separated-symbols
   [config] 
-  (apply str (interpose "," (map (fn [s] (:symbol s)) (:stocks config))))
-)
+  (apply str (interpose "," (map (fn [s] (:symbol s)) (:stocks config)))))
 
 (defn get-lookup-url
   [config]
   ; Ignoring url encoding issues, cap on number of symbols that can be looked up and the url length for now
-  (str "http://finance.yahoo.com/webservice/v1/symbols/" (get-comma-separated-symbols config) "/quote?format=json")
-)
+  (str "http://finance.yahoo.com/webservice/v1/symbols/" (get-comma-separated-symbols config) "/quote?format=json"))
 
 (defn get-raw
   [config]
   ; Make web requets and then convert to json - migth be possible to do this in one step
-  (json/read-str (slurp (get-lookup-url config)))
-)
+  (json/read-str (slurp (get-lookup-url config))))
 
 (defn parse-raw
   [quote]
@@ -28,9 +25,7 @@
   ; Return a new map with just the data we need
   (let [fields (get-in quote ["resource" "fields"]) 
         {:strs [symbol price utctime]} fields]
-    {:symbol symbol :price price :timestamp (fmt/parse (fmt/formatters :date-time-no-ms) utctime)}
-  )
-)
+    {:symbol symbol :price price :timestamp (fmt/parse (fmt/formatters :date-time-no-ms) utctime)}))
 
 (defn acquire
   [config]
@@ -39,6 +34,4 @@
   ; Return a vector of quote data
   (let [raw (get-raw config)
         {{quotes "resources"} "list"} raw]
-    (vec (map parse-raw quotes))
-  )
-)
+    (vec (map parse-raw quotes))))
