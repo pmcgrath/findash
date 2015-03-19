@@ -25,7 +25,7 @@
   ; Return a new map with just the data we need
   (let [fields (get-in quote ["resource" "fields"]) 
         {:strs [symbol price utctime]} fields]
-    {:symbol symbol :price price :timestamp (fmt/parse (fmt/formatters :date-time-no-ms) utctime)}))
+    {:symbol symbol :price (read-string price) :timestamp (fmt/parse (fmt/formatters :date-time-no-ms) utctime)}))
 
 (defn acquire
   [config]

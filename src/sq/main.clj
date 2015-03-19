@@ -30,7 +30,8 @@
  
   (log/info "Starting store")
   (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
-        quotes-ch (tap mult-quotes-ch (chan))] 
+        quotes-ch (chan)
+        _ (tap mult-quotes-ch quotes-ch)] 
     (store/start config quotes-ch))
  
   (log/info "Starting quotes watcher")
@@ -42,7 +43,4 @@
         quotes-ch (tap mult-quotes-ch (chan))] 
     (while true 
       (let [quotes (<!! quotes-ch)]
-        (log/info "TEMP Got quotes [" quotes "]")
-      )))
-  ; What prevents this from indicating the process has completed, background threads ? Threadpool activity ?
-)
+        (log/info "TEMP Got quotes [" quotes "]")))))

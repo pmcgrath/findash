@@ -20,5 +20,4 @@
     (let [quotes (<! in-ch)]
       (when-not (nil? quotes)
         (update! quotes)
-        (recur)
-      ))))
+        (recur)))))

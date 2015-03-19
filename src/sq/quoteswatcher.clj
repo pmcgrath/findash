@@ -22,7 +22,5 @@
           ; Put quotes on out channel and pause, if put on channel returns false we exit
           (when (>! out-ch (acquirer-fn))
             (<! (timeout pause-interval))
-            (recur)
-          )
-        )
+            (recur)))
         (log/info "No stocks to watch")))))

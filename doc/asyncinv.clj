@@ -90,8 +90,11 @@
           (println name "received message [" message "]")
           (recur))))))
 
-(run-consumer "C1" (tap mult-message-ch (chan)))
-(run-consumer "C1" (tap mult-message-ch (chan)))
+(def c1-ch (chan))
+(def c2-ch (chan))
+
+(run-consumer "C1" (tap mult-message-ch c1-ch))
+(run-consumer "C1" (tap mult-message-ch c2-ch))
 (run-producer message-ch)
 
 (<!! (timeout 2000))
