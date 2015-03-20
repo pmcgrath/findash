@@ -8,16 +8,6 @@
     [sq.store :as store]
     [sq.web :as web]))
 
-(def config { 
-  :port 3000
-  :refresh-interval-seconds 5 
-  :stocks [
-    {:symbol "RY4B.IR" :currency "EUR" } 
-    {:symbol "LLOY.L" :currency "GBP" }
-    {:symbol "TSCO.L" :currency "GBP" }
-    {:symbol "GOOG" :currency "USD" }
-    {:symbol "MSFT" :currency "USD" }]})
-
 (defn -main 
   [& args]
   (log/info "Starting app")
@@ -25,23 +15,27 @@
   (log/info "Initialising hub")
   (hub/init)
 
-  (log/info "Starting web app")
-  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch)] 
-    (web/start (:port config) mult-quotes-ch))
- 
   (log/info "Starting store")
-  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
-        quotes-sub-ch (chan)
-        _ (tap mult-quotes-ch quotes-sub-ch)] 
-    (store/start config quotes-sub-ch))
+  (let [config-updates-ch (hub/get-item :config-updates-ch) 
+        mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
+        new-quotes-sub-ch (chan)
+        _ (tap mult-new-quotes-ch new-quotes-sub-ch)] 
+    (store/start config-updates-ch new-quotes-sub-ch))
  
+  (log/info "Starting web app")
+  (let [config (store/get-config)
+        mult-quotes-ch (hub/get-item :mult-new-quotes-ch)] 
+    (web/start (:port config) mult-quotes-ch))
+  
   (log/info "Starting quotes watcher")
-  (let [quotes-pub-ch (hub/get-item :quotes-ch)] 
-    (quoteswatcher/start config quotes-pub-ch))
+  (let [config (store/get-config)
+        config-updates-ch (hub/get-item :config-updates-ch) 
+        new-quotes-pub-ch (hub/get-item :new-quotes-ch)] 
+    (quoteswatcher/start config config-updates-ch new-quotes-pub-ch))
 
   (log/info "Starting TEMP local quotes logger")
-  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
-        quotes-ch (tap mult-quotes-ch (chan))] 
+  (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
+        new-quotes-ch (tap mult-new-quotes-ch (chan))] 
     (while true 
-      (let [quotes (<!! quotes-ch)]
+      (let [quotes (<!! new-quotes-ch)]
         (log/info "!!!!TEMP Got quotes [" quotes "]")))))
