@@ -7,8 +7,9 @@
     [compojure.route :as route]
     [compojure.handler :as handler]
     [hiccup.page :as page]
-    [org.httpkit.server :as httpkit]
-    [sq.store :as store]))
+    [org.httpkit.server :as httpkit]))
+
+(def mult-quotes-ch (promise))
 
 (defn home-page-handler
   [request]
@@ -47,10 +48,9 @@
 (defn web-socket-handler 
   [request]
   (let [uuid (str (java.util.UUID/randomUUID))
-        mult-quotes-ch (sq.hub/get-item :mult-quotes-ch) 
         quotes-sub-ch (chan)]
     (log/info uuid " web socket opened")
-    (tap mult-quotes-ch quotes-sub-ch)
+    (tap @mult-quotes-ch quotes-sub-ch)
     (httpkit/with-channel request channel
       (web-socket-re-publish-quote-updates uuid channel quotes-sub-ch)
       (httpkit/on-close channel (partial web-socket-on-close uuid quotes-sub-ch))
@@ -67,5 +67,6 @@
     handler/site))
 
 (defn start 
-  [port]
+  [port in-mult-quotes-ch]
+  (deliver mult-quotes-ch in-mult-quotes-ch)
   (httpkit/run-server app {:port port}))

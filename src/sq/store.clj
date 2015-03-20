@@ -15,9 +15,9 @@
   (vals @store))
 
 (defn start 
-  [config in-ch]
+  [config quotes-sub-ch]
   (go-loop []
-    (let [quotes (<! in-ch)]
+    (let [quotes (<! quotes-sub-ch)]
       (when-not (nil? quotes)
         (update! quotes)
         (recur)))))

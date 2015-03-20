@@ -10,7 +10,7 @@
 
 (def config { 
   :port 3000
-  :refresh-interval-seconds 20 
+  :refresh-interval-seconds 5 
   :stocks [
     {:symbol "RY4B.IR" :currency "EUR" } 
     {:symbol "LLOY.L" :currency "GBP" }
@@ -26,21 +26,22 @@
   (hub/init)
 
   (log/info "Starting web app")
-  (web/start (:port config))
+  (let [mult-quotes-ch (hub/get-item :mult-quotes-ch)] 
+    (web/start (:port config) mult-quotes-ch))
  
   (log/info "Starting store")
   (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
-        quotes-ch (chan)
-        _ (tap mult-quotes-ch quotes-ch)] 
-    (store/start config quotes-ch))
+        quotes-sub-ch (chan)
+        _ (tap mult-quotes-ch quotes-sub-ch)] 
+    (store/start config quotes-sub-ch))
  
   (log/info "Starting quotes watcher")
-  (let [quotes-ch (hub/get-item :quotes-ch)] 
-    (quoteswatcher/start config quotes-ch))
+  (let [quotes-pub-ch (hub/get-item :quotes-ch)] 
+    (quoteswatcher/start config quotes-pub-ch))
 
   (log/info "Starting TEMP local quotes logger")
   (let [mult-quotes-ch (hub/get-item :mult-quotes-ch) 
         quotes-ch (tap mult-quotes-ch (chan))] 
     (while true 
       (let [quotes (<!! quotes-ch)]
-        (log/info "TEMP Got quotes [" quotes "]")))))
+        (log/info "!!!!TEMP Got quotes [" quotes "]")))))
