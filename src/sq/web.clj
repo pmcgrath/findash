@@ -28,6 +28,6 @@
     handler/site))
 
 (defn start 
-  [port in-mult-quotes-ch]
-  (socket/init! in-mult-quotes-ch)
+  [port mult-latest-quotes-ch]
+  (socket/init! mult-latest-quotes-ch)
   (httpkit/run-server app {:port port}))

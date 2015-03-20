@@ -1,31 +1,26 @@
 (ns sq.store
   (:require
-    [clojure.core.async :refer [<! >! go go-loop]]
-    [clojure.tools.logging :as log]))
+    [clojure.core.async :refer [<! go-loop]]))
 
 (def ^:private default-config { 
   :port 3000
   :refresh-interval-seconds 5 
   :stocks [
-    {:symbol "RY4B.IR" :currency "EUR" } 
-    {:symbol "LLOY.L" :currency "GBP" }
-    {:symbol "TSCO.L" :currency "GBP" }
-    {:symbol "GOOG" :currency "USD" }
-    {:symbol "MSFT" :currency "USD" }]})
+    {:symbol "RY4B.IR" :currency "EUR"} 
+    {:symbol "LLOY.L" :currency "GBP"}
+    {:symbol "TSCO.L" :currency "GBP"}
+    {:symbol "GOOG" :currency "USD"}
+    {:symbol "MSFT" :currency "USD"}]})
 
 (def ^:private config (atom {}))
 (def ^:private latest-quotes (atom {}))
 
-(defn handle-config-update
-  [config-updates-ch]
-  (fn [key atom old-state new-state] 
-    (log/info "Config changed old: [" old-state "] new: [" new-state "]") 
-    (go (>! config-updates-ch new-state))))
-
-(defn init-config
-  [config-updates-ch]
-  (add-watch config :watcher (handle-config-update config-updates-ch))
-  (reset! config default-config))
+(defn init!
+  ([]
+    (init! default-config))
+  ([new-config]
+    (reset! config new-config)
+    (reset! latest-quotes {})))
 
 (defn update-latest-quotes!
   [quotes]
@@ -34,9 +29,9 @@
     (swap! latest-quotes assoc (:symbol quote) quote)))
 
 (defn subscribe-for-quote-updates 
-  [quotes-sub-ch]
+  [new-quotes-sub-ch]
   (go-loop []
-    (let [quotes (<! quotes-sub-ch)]
+    (let [quotes (<! new-quotes-sub-ch)]
       (when-not (nil? quotes)
         (update-latest-quotes! quotes)
         (recur)))))
@@ -46,7 +41,12 @@
   @config
 )
 
+(defn get-latest-quotes
+  []
+  (-> @latest-quotes sort vals)
+)
+
 (defn start 
-  [config-updates-ch quotes-sub-ch]
-  (init-config config-updates-ch)
-  (subscribe-for-quote-updates quotes-sub-ch))
+  [new-quotes-sub-ch]
+  (init!)
+  (subscribe-for-quote-updates new-quotes-sub-ch))

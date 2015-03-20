@@ -12,15 +12,14 @@
   [& args]
   (log/info "Starting app")
 
-  (log/info "Initialising hub")
-  (hub/init)
+  (log/info "Starting hub")
+  (hub/start)
 
   (log/info "Starting store")
-  (let [config-updates-ch (hub/get-item :config-updates-ch) 
-        mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
+  (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
         new-quotes-sub-ch (chan)
         _ (tap mult-new-quotes-ch new-quotes-sub-ch)] 
-    (store/start config-updates-ch new-quotes-sub-ch))
+    (store/start new-quotes-sub-ch))
  
   (log/info "Starting web app")
   (let [config (store/get-config)
@@ -28,10 +27,9 @@
     (web/start (:port config) mult-quotes-ch))
   
   (log/info "Starting quotes watcher")
-  (let [config (store/get-config)
-        config-updates-ch (hub/get-item :config-updates-ch) 
+  (let [get-config-fn store/get-config
         new-quotes-pub-ch (hub/get-item :new-quotes-ch)] 
-    (quoteswatcher/start config config-updates-ch new-quotes-pub-ch))
+    (quoteswatcher/start get-config-fn new-quotes-pub-ch))
 
   (log/info "Starting TEMP local quotes logger")
   (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
