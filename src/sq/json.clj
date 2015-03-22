@@ -10,4 +10,4 @@
 
 (defn generate-string
   [data]
-  (cheshire/generate-string data))
+  (cheshire/generate-string data {:pretty true}))

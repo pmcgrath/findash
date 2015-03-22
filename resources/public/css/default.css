@@ -1,3 +1,13 @@
 body {
-    background-color: Cornsilk;
+  background-color: Cornsilk;
+}
+
+.symbol {
+  color: red;
+  text-align: left;
+} 
+
+.price {
+  color: blue;
+  text-align: rigth;
 }

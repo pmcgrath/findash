@@ -11,10 +11,10 @@
 (defn web-socket-re-publish-quote-updates
   [uuid channel quotes-sub-ch]
   (go-loop []
-    (if-let [stocks (<! quotes-sub-ch)]
+    (if-let [quotes (<! quotes-sub-ch)]
       (do
-        (log/info "-----> About to send " uuid " got stocks " stocks)
-        (httpkit/send! channel (json/generate-string (assoc {:uuid uuid "messageType" "stock-updates"} :stocks stocks)))
+        (log/info "-----> About to send " uuid " got quotes " quotes)
+        (httpkit/send! channel (json/generate-string (assoc {:uuid uuid "messageType" "quote-updates"} :quotes quotes)))
         (recur)))))
 
 (defn web-socket-on-close

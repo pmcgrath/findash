@@ -46,6 +46,11 @@
   (-> @latest-quotes sort vals)
 )
 
+(defn get-stocks
+  []
+  (sort-by :symbol (:stocks @config))
+)
+
 (defn start 
   [new-quotes-sub-ch]
   (init!)
