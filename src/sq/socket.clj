@@ -14,7 +14,7 @@
     (if-let [stocks (<! quotes-sub-ch)]
       (do
         (log/info "-----> About to send " uuid " got stocks " stocks)
-        (httpkit/send! channel (json/generate-string (assoc {:uuid uuid :message-type "stock-updates"} :stocks stocks)))
+        (httpkit/send! channel (json/generate-string (assoc {:uuid uuid "messageType" "stock-updates"} :stocks stocks)))
         (recur)))))
 
 (defn web-socket-on-close
