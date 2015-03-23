@@ -3,11 +3,17 @@ body {
 }
 
 .symbol {
-  color: red;
-  text-align: left;
+  color: black;
 } 
 
-.price {
-  color: blue;
-  text-align: rigth;
+.price.up {
+  color: green;
+}
+
+.price.unchanged {
+  color: black;
+}
+
+.price.down {
+  color: red;
 }

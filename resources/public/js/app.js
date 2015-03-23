@@ -27,7 +27,7 @@ var socketHelper = {
       console.log("socket onopen : Connected to " + event.currentTarget.url);
     };
     socket.onmessage = function(event) {
-      console.log("socket onmessage : Received " + event.data);
+      console.log("socket onmessage : Received data");
       var data = JSON.parse(event.data);
       switch(data.messageType) {
         case "quote-updates":
@@ -45,14 +45,27 @@ var socketHelper = {
 };
 
 var Quote = React.createClass({
+  determinePriceMovementLabel: function(quote) {
+    if (quote.prices.length < 2) { return "unchanged"; }
+    var movementValue = quote.prices[quote.prices.length - 1].price - quote.prices[quote.prices.length - 2].price;
+    if (movementValue < 0) { return "down"; }
+    if (movementValue === 0) { return "unchanged"; }
+    return "up";
+  },
   render: function() {
+    var quote = this.props.quote;
+    var latestQuotePrice = quote.prices[quote.prices.length - 1];
+    var priceMovementClassName = "price " + this.determinePriceMovementLabel(quote);
     return (
       <div className="quote">
         <div className="symbol">
-          {this.props.symbol}
+          {quote.symbol}
         </div>
-        <div className="price">
-          {this.props.price}
+        <div className="timestamp">
+          {latestQuotePrice.timestamp}
+        </div>
+        <div className={priceMovementClassName}>
+          {latestQuotePrice.price}
         </div>
       </div>
     );
@@ -63,7 +76,7 @@ var QuoteList = React.createClass({
   render: function() {
     var quoteNodes = this.props.quotes.map(function(quote, index) {
       return (
-        <Quote symbol={quote.symbol} price={quote.price} key={index} />
+        <Quote quote={quote} key={index} />
       );
     });
     return (
@@ -76,16 +89,34 @@ var QuoteList = React.createClass({
 
 var App = React.createClass({
   mergeNewQuotesUpdatingState: function(newQuotes) {
-    var proposedQuotesIndex = newQuotes.reduce(
-      function(accum, current, index, array) { accum[current.symbol] = index; return accum; }, 
+    // Create map of existing quotes - key is symbol and value is the existing quote
+    var existingQuotesIndex = this.state.quotes.reduce(
+      function(accum, quote, index, array) { accum[quote.symbol] = quote; return accum; }, 
       {});
-    for (var index = 0; index < this.state.quotes.length; index++) {
-      var existingQuote = this.state.quotes[index];
-      if (!proposedQuotesIndex.hasOwnProperty(existingQuote.symbol)) {
-        newQuotes.push(existingQuote);
-      }
+    // Map the new quotes to a new collection, quotes with existing entries, have the new quote pushed into their existing prices array
+    var updatedQuotes = newQuotes.map(
+      function(newQuote, index, array) {
+        if (existingQuotesIndex.hasOwnProperty(newQuote.symbol)) {
+          // Quotes has existing entry - get last price record
+          var matchingQuote = existingQuotesIndex[newQuote.symbol];
+          var lastPrice = matchingQuote.prices[matchingQuote.prices.length - 1]; 
+          if ((newQuote.timestamp != lastPrice.timestamp) || (newQuote.price != lastPrice.price)) {
+            // New quote is a change so add price record
+            matchingQuote.prices.push({timestamp: newQuote.timestamp, price: newQuote.price});
+          }
+          existingQuotesIndex[newQuote.symbol] = null; // Bad side effect
+          return matchingQuote;
+        }
+        // Has no existing record, so create new quote record
+        return {symbol: newQuote.symbol, prices: [{timestamp: newQuote.timestamp, price: newQuote.price}]};
+      });
+    // For any existing quotes that did not have matching new quotes add those records
+    for (var existingQuoteSymbol in existingQuotesIndex) {
+      var existingQuote = existingQuotesIndex[existingQuoteSymbol];
+      if (existingQuote != null) { updatedQuotes.push(existingQuote); }
     }
-    var state = this.state; state.quotes = newQuotes; // We mutate so we do not overwrite any other state (None here at this time)
+
+    var state = this.state; state.quotes = updatedQuotes; // We mutate so we do not overwrite any other state (None here at this time)
     this.setState(state);
   },
   getInitialQuotes: function() {
@@ -102,7 +133,8 @@ var App = React.createClass({
       function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this)); 
   },
   getInitialState: function() {
-    return {quotes: []};
+    //return {quotes: []};
+    return {quotes: [{symbol: "APPL", prices: [{timestamp: "start", price: 1.000001}]}]};
   },
   componentDidMount: function() {
     this.getInitialQuotes();
