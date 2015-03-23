@@ -18,10 +18,11 @@ var ajaxHelper = {
 };
 
 var socketHelper = {
+  onDisconnectedRetryIntervalInMs: 5000,
   start: function(url, quotesUpdatedHandlerFn) {
     socket = new WebSocket(url);
     socket.onerror = function(error) {
-      console.log("socket onerror :" + error);
+      console.log("socket onerror :" + error.toString());
     };
     socket.onopen = function(event) {
       console.log("socket onopen : Connected to " + event.currentTarget.url);
@@ -40,7 +41,8 @@ var socketHelper = {
     socket.onclose = function(event) {
       console.log("socket onclose : Disconnected: " + event.code + " " + event.reason);
       socket = null;
-    };
+      setTimeout(function() { this.start(url, quotesUpdatedHandlerFn); }.bind(this), this.onDisconnectedRetryIntervalInMs);
+    }.bind(this);
   }
 };
 
