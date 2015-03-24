@@ -18,12 +18,10 @@ body {
   color: red;
 }
 
-.addStockFormWorking.false {
+.addStockWorkingImage.false {
   display: none;
-  color: green;
 }
 
-.addStockFormWorking.true {
+.addStockWorkingImage.true {
   display: block;
-  color: blue;
 }

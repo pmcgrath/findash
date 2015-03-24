@@ -116,21 +116,26 @@
 
   var AddStockForm = React.createClass({
     onChange: function(fieldName, event) {
+      // Will rebuild if applicable
+      var error = '';
       // Existing state
       var newSymbol = this.state.symbol;
       var newCurrency = this.state.currency;
       // Process proposed change
       if (fieldName === 'symbol') {
-        // Pending - Do some validation
         newSymbol = event.target.value.trim().toUpperCase();
+        // Pending - Do some validation
+        if (newSymbol.length > 0 && newSymbol.length < 4) {
+          error = 'Symbol must be at least 4 chars long';
+        }
       }
       if (fieldName === 'currency') {
-        // Pending - Do some validation
         newCurrency = event.target.value.trim().toUpperCase();
+        // Pending - Do some validation
       }
-      // Determine if submission allowed - both not empty
-      var allowSubmission = ((newSymbol != '') && (newCurrency != ''));
-      this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission});
+      // Determine if submission allowed - content to submit exists and no error
+      var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
+      this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
     },
     onSymbolChange: function(event) {
       this.onChange('symbol', event);
@@ -140,17 +145,17 @@
     },
     handleSubmit: function(e) {
       e.preventDefault();
-      this.setState({allowSubmission: false});
+      this.setState({allowSubmission: false, isBeingSaved: true});
       var url = this.props.protocol + '//' + this.props.host + '/api/stocks';
       var data = {symbol: this.state.symbol, currency: this.state.currency};
       this.props.ajax.postJsonData(
         url,
         data,
         function(result) { this.setState(this.getInitialState()); }.bind(this),
-        function(xhr)    { console.log('handleSubmit error status : ' + xhr.status); });
+        function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
     },
     getInitialState: function() {
-      return {symbol: '', currency: '', allowSubmission: false};
+      return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
     },
     render: function() {
       return (
@@ -161,7 +166,8 @@
             <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onCurrencyChange} />
             <input className='addStock' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
-          <div className={'addStockFormWorking ' + this.state.allowSubmission}>Working</div>
+          <image className={'addStockWorkingImage ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
+          <div>{this.state.error}</div>
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
       );
