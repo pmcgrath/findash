@@ -17,3 +17,13 @@ body {
 .price.down {
   color: red;
 }
+
+.addStockFormWorking.false {
+  display: none;
+  color: green;
+}
+
+.addStockFormWorking.true {
+  display: block;
+  color: blue;
+}

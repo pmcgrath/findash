@@ -51,6 +51,16 @@
   (sort-by :symbol (:stocks @config))
 )
 
+(defn add-stock
+  [new-stock]
+  (let [stock-symbol (:symbol new-stock)
+        matching-stock (some #(= (:symbol %) stock-symbol) (:stocks @config))]
+    (if (nil? matching-stock)
+      (do
+        (swap! config assoc :stocks (conj (:stocks @config) new-stock))
+        true)
+    false)))
+
 (defn start 
   [new-quotes-sub-ch]
   (init!)

@@ -32,9 +32,12 @@
 (defn add-stock-service-handler
   [request]
   (let [body (:body request)
-        stock (json/parse-body body)]
-    (println "***** Add stock!!!!!!!!!!!" stock)
-    {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string {})}))
+        stock (json/parse-body body)
+        symbol (:symbol stock)
+        added (store/add-stock stock)]
+    (if added
+      {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string {:symbol symbol})}
+      {:status 409 :headers {"Content-Type" "application/json"} :body (json/generate-string {:symbol symbol :error "Conflict, stock appears to already exist"})})))
 
 (defroutes app-routes
   (GET "/" request get-home-page-handler)

@@ -1,3 +1,5 @@
+'use strict';
+
 var ajaxHelper = {
   makeJsonRequest: function(url, method, data, successFn, errorFn) {
     var xhr = new XMLHttpRequest();
@@ -13,45 +15,45 @@ var ajaxHelper = {
     }
     xhr.open(method, url);
     xhr.setRequestHeader('Accept', 'application/json');
-    if (method === "GET") {
+    if (method === 'GET') {
       xhr.send();
     } else {
-      // Assumes there is content - ignoring HEAD, OPTIONS, assumes its a PATCH, POST or PUT
+      // Assumes there is content - ignoring HEAD, OPTIONS, assumes it is a PATCH, POST or PUT
       xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify(data));
+      xhr.send(JSON.stringify(data, null, 2));
     }
   },
   getJsonData: function(url, successFn, errorFn) {
-    ajaxHelper.makeJsonRequest(url, "GET", null, successFn, errorFn);
+    this.makeJsonRequest(url, 'GET', null, successFn, errorFn);
   },
   postJsonData: function(url, data, successFn, errorFn) {
-    ajaxHelper.makeJsonRequest(url, "POST", data, successFn, errorFn);
+    this.makeJsonRequest(url, 'POST', data, successFn, errorFn);
   }
 };
 
 var socketHelper = {
   onDisconnectedRetryIntervalInMs: 5000,
   start: function(url, quotesUpdatedHandlerFn) {
-    socket = new WebSocket(url);
+    var socket = new WebSocket(url);
     socket.onerror = function(error) {
-      console.log("socket onerror :" + error.toString());
+      console.log('socket onerror :' + error.toString());
     };
     socket.onopen = function(event) {
-      console.log("socket onopen : Connected to " + event.currentTarget.url);
+      console.log('socket onopen : Connected to ' + event.currentTarget.url);
     };
     socket.onmessage = function(event) {
-      console.log("socket onmessage : Received data");
+      console.log('socket onmessage : Received data');
       var data = JSON.parse(event.data);
       switch(data.messageType) {
-        case "quote-updates":
+        case 'quote-updates':
           quotesUpdatedHandlerFn(data.quotes);
           break;
         default:
-          console.log("No handler for message-type");
+          console.log('No handler for message-type');
       }
     };
     socket.onclose = function(event) {
-      console.log("socket onclose : Disconnected: " + event.code + " " + event.reason);
+      console.log('socket onclose : Disconnected: ' + event.code + ' ' + event.reason);
       socket = null;
       setTimeout(function() { this.start(url, quotesUpdatedHandlerFn); }.bind(this), this.onDisconnectedRetryIntervalInMs);
     }.bind(this);
@@ -59,24 +61,33 @@ var socketHelper = {
 };
 
 var Quote = React.createClass({
+  determineLocaleDisplayTimestamp: function(quote) {
+    var timestamp = new Date(quote.timestamp);
+    var now = new Date();
+    if (timestamp.getUTCDate() != now.getUTCDate()) {
+      return timestamp.toLocaleString();
+    }    
+    return timestamp.toLocaleTimeString();
+  },
   determinePriceMovementLabel: function(quote) {
-    if (quote.prices.length < 2) { return "unchanged"; }
+    if (quote.prices.length < 2) { return 'unchanged'; }
     var movementValue = quote.prices[quote.prices.length - 1].price - quote.prices[quote.prices.length - 2].price;
-    if (movementValue < 0) { return "down"; }
-    if (movementValue === 0) { return "unchanged"; }
-    return "up";
+    if (movementValue < 0) { return 'down'; }
+    if (movementValue === 0) { return 'unchanged'; }
+    return 'up';
   },
   render: function() {
     var quote = this.props.quote;
     var latestQuotePrice = quote.prices[quote.prices.length - 1];
-    var priceMovementClassName = "price " + this.determinePriceMovementLabel(quote);
+    var localeTimestamp = this.determineLocaleDisplayTimestamp(latestQuotePrice);
+    var priceMovementClassName = 'price ' + this.determinePriceMovementLabel(quote);
     return (
-      <div className="quote">
-        <div className="symbol">
+      <div className='quote'>
+        <div className='symbol'>
           {quote.symbol}
         </div>
-        <div className="timestamp">
-          {latestQuotePrice.timestamp}
+        <div className='timestamp'>
+          {localeTimestamp}
         </div>
         <div className={priceMovementClassName}>
           {latestQuotePrice.price}
@@ -88,13 +99,12 @@ var Quote = React.createClass({
 
 var QuoteList = React.createClass({
   render: function() {
-    var quoteNodes = this.props.quotes.map(function(quote, index) {
-      return (
-        <Quote quote={quote} key={index} />
-      );
+    var quoteNodes = this.props.quotes
+      .sort(function(quote1, quote2) { return quote1.symbol.localeCompare(quote2.symbol); })
+      .map(function(quote, index) { return (<Quote quote={quote} key={index} />);
     });
     return (
-      <div className="quoteList">
+      <div className='quoteList'>
         {quoteNodes}
       </div>
     );
@@ -102,27 +112,54 @@ var QuoteList = React.createClass({
 });
 
 var AddStockForm = React.createClass({
+  onChange: function(fieldName, event) {
+    // Existing state
+    var newSymbol = this.state.symbol;
+    var newCurrency = this.state.currency;
+    // Process proposed change
+    if (fieldName === 'symbol') {
+      // Pending - Do some validation
+      newSymbol = event.target.value.trim().toUpperCase();
+    }    
+    if (fieldName === 'currency') {
+      // Pending - Do some validation
+      newCurrency = event.target.value.trim().toUpperCase();
+    }    
+    // Determine if submission allowed - both not empty
+    var allowSubmission = ((newSymbol != '') && (newCurrency != ''));
+    this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission});
+  },
+  onSymbolChange: function(event) {
+    this.onChange('symbol', event);
+  },
+  onCurrencyChange: function(event) {
+    this.onChange('currency', event);
+  },
   handleSubmit: function(e) {
     e.preventDefault();
-    var symbol = this.refs.symbol.getDOMNode().value.trim();
-    if (!symbol) {
-      return;
-    }
-    alert("About to add " + symbol);
-    var url = this.props.protocol + "//" + this.props.host + "/api/stocks";
+    this.setState({allowSubmission: false});
+    var url = this.props.protocol + '//' + this.props.host + '/api/stocks';
+    var data = {symbol: this.state.symbol, currency: this.state.currency};
     this.props.ajaxHelper.postJsonData(
       url, 
-      {symbol: symbol},
-      function(result) { console.log("Success adding stock " + symbol); },
-      function(xhr)    { console.log("handleSubmit error status : " + xhr.status); });
-    this.refs.symbol.getDOMNode().value = '';
+      data,
+      function(result) { this.setState(this.getInitialState()); }.bind(this),
+      function(xhr)    { console.log('handleSubmit error status : ' + xhr.status); });
+  },
+  getInitialState: function() {
+    return {symbol: '', currency: '', allowSubmission: false};
   },
   render: function() {
     return (
-      <form className="addStockForm" onSubmit={this.handleSubmit}>
-        <input type="text" placeholder="Symbol" ref="symbol" />
-        <input className="addStock" type="submit" value="Add" />
+<div>
+      <form className='addStockForm' onSubmit={this.handleSubmit}>
+        <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onSymbolChange} />
+        <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onCurrencyChange} />
+        <input className='addStock' type='submit' value='Add' disabled={!this.state.allowSubmission} />
       </form>
+      <div className={'addStockFormWorking ' + this.state.allowSubmission}>Working</div>
+      <pre>{JSON.stringify(this.state, null, 2)}</pre>
+</div>
     );
   }
 });
@@ -154,19 +191,17 @@ var App = React.createClass({
       var existingQuote = existingQuotesIndex[existingQuoteSymbol];
       if (existingQuote != null) { updatedQuotes.push(existingQuote); }
     }
-
-    var state = this.state; state.quotes = updatedQuotes; // We mutate so we do not overwrite any other state (None here at this time)
-    this.setState(state);
+    this.setState({quotes: updatedQuotes});
   },
   getInitialQuotes: function() {
-    var url = this.props.protocol + "//" + this.props.host + "/api/quotes";
+    var url = this.props.protocol + '//' + this.props.host + '/api/quotes';
     this.props.ajaxHelper.getJsonData(
       url, 
       function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this),
-      function(xhr)    { console.log("getInitialQuotes error status : " + xhr.status); });
+      function(xhr)    { console.log('getInitialQuotes error status : ' + xhr.status); });
   },
   runQuotesUpdateListener: function() {
-    var url = "ws://" + this.props.host + "/ws";
+    var url = 'ws://' + this.props.host + '/ws';
     this.props.socketHelper.start(
       url,
       function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this)); 
@@ -180,12 +215,13 @@ var App = React.createClass({
   },
   render: function() {
     return (
-      <div className="stocks">
+      <div className='stocks'>
         <AddStockForm protocol={this.props.protocol} host={this.props.host} ajaxHelper={ajaxHelper} />
-        <div className="quotes">
+        <div className='quotes'>
           <h1>Quotes</h1>
           <QuoteList quotes={this.state.quotes} />
         </div>
+        <pre>{JSON.stringify(this.state, null, 2)}</pre>
       </div>
     );
   }
