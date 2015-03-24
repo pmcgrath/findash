@@ -1,5 +1,5 @@
 var ajaxHelper = {
-  getJsonData: function(url, successFn, errorFn) {
+  makeJsonRequest: function(url, method, data, successFn, errorFn) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
@@ -11,9 +11,21 @@ var ajaxHelper = {
         }
       }
     }
-    xhr.open("GET", url);
+    xhr.open(method, url);
     xhr.setRequestHeader('Accept', 'application/json');
-    xhr.send();
+    if (method === "GET") {
+      xhr.send();
+    } else {
+      // Assumes there is content - ignoring HEAD, OPTIONS, assumes its a PATCH, POST or PUT
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify(data));
+    }
+  },
+  getJsonData: function(url, successFn, errorFn) {
+    ajaxHelper.makeJsonRequest(url, "GET", null, successFn, errorFn);
+  },
+  postJsonData: function(url, data, successFn, errorFn) {
+    ajaxHelper.makeJsonRequest(url, "POST", data, successFn, errorFn);
   }
 };
 
@@ -89,6 +101,31 @@ var QuoteList = React.createClass({
   }
 });
 
+var AddStockForm = React.createClass({
+  handleSubmit: function(e) {
+    e.preventDefault();
+    var symbol = this.refs.symbol.getDOMNode().value.trim();
+    if (!symbol) {
+      return;
+    }
+    alert("About to add " + symbol);
+    var url = this.props.protocol + "//" + this.props.host + "/api/stocks";
+    this.props.ajaxHelper.postJsonData(
+      url, 
+      {symbol: symbol},
+      function(result) { console.log("Success adding stock " + symbol); },
+      function(xhr)    { console.log("handleSubmit error status : " + xhr.status); });
+    this.refs.symbol.getDOMNode().value = '';
+  },
+  render: function() {
+    return (
+      <form className="addStockForm" onSubmit={this.handleSubmit}>
+        <input type="text" placeholder="Symbol" ref="symbol" />
+        <input className="addStock" type="submit" value="Add" />
+      </form>
+    );
+  }
+});
 var App = React.createClass({
   mergeNewQuotesUpdatingState: function(newQuotes) {
     // Create map of existing quotes - key is symbol and value is the existing quote
@@ -135,8 +172,7 @@ var App = React.createClass({
       function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this)); 
   },
   getInitialState: function() {
-    //return {quotes: []};
-    return {quotes: [{symbol: "APPL", prices: [{timestamp: "start", price: 1.000001}]}]};
+    return {quotes: []};
   },
   componentDidMount: function() {
     this.getInitialQuotes();
@@ -144,9 +180,12 @@ var App = React.createClass({
   },
   render: function() {
     return (
-      <div className="quotes">
-        <h1>Quotes</h1>
-        <QuoteList quotes={this.state.quotes} />
+      <div className="stocks">
+        <AddStockForm protocol={this.props.protocol} host={this.props.host} ajaxHelper={ajaxHelper} />
+        <div className="quotes">
+          <h1>Quotes</h1>
+          <QuoteList quotes={this.state.quotes} />
+        </div>
       </div>
     );
   }

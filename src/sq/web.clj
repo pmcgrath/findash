@@ -29,11 +29,19 @@
   [request]
   {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-stocks))})
 
+(defn add-stock-service-handler
+  [request]
+  (let [body (:body request)
+        stock (json/parse-body body)]
+    (println "***** Add stock!!!!!!!!!!!" stock)
+    {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string {})}))
+
 (defroutes app-routes
   (GET "/" request get-home-page-handler)
   (context "/api" [] 
     (GET "/quotes" request get-quotes-service-handler)
-    (GET "/stocks" request get-stocks-service-handler))
+    (GET "/stocks" request get-stocks-service-handler)
+    (POST "/stocks" request add-stock-service-handler))
   (GET "/ws" request socket/handler)
   (route/resources "/")
   (route/not-found "Not Found"))

@@ -11,3 +11,7 @@
 (defn generate-string
   [data]
   (cheshire/generate-string data {:pretty true}))
+
+(defn parse-body
+  [body]
+    (cheshire/parse-string (slurp body) true))
