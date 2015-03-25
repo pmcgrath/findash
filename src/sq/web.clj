@@ -5,6 +5,7 @@
     [compojure.handler :as handler]
     [hiccup.page :as page]
     [org.httpkit.server :as httpkit]
+    [sq.currency :as currency]
     [sq.json :as json]
     [sq.store :as store]
     [sq.socket :as socket]))
@@ -20,6 +21,10 @@
     [:body
       [:div {:id "content"}]
       [:script {:type "text/jsx;harmony=true", :src "/js/app.js"}]]))
+
+(defn get-currencies-service-handler
+  [request]
+  {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (currency/get-currency-iso-alpha-codes))})
 
 (defn get-quotes-service-handler
   [request]
@@ -42,6 +47,7 @@
 (defroutes app-routes
   (GET "/" request get-home-page-handler)
   (context "/api" [] 
+    (GET "/currencies" request get-currencies-service-handler)
     (GET "/quotes" request get-quotes-service-handler)
     (GET "/stocks" request get-stocks-service-handler)
     (POST "/stocks" request add-stock-service-handler))
