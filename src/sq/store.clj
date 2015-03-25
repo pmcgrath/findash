@@ -1,6 +1,6 @@
 (ns sq.store
   (:require [clojure.core.async :refer [<! go-loop]]
-            [sq.refdata :as refdata]))
+            [sq.ref-data :as ref-data]))
 
 (def ^:private default-config { 
   :port 3000
@@ -43,7 +43,7 @@
 
 (defn get-currency-iso-alpha-codes
   []
-  (refdata/get-currency-iso-alpha-codes))
+  (ref-data/get-currency-iso-alpha-codes))
 
 (defn get-latest-quotes
   []

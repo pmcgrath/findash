@@ -1,4 +1,4 @@
-(ns sq.yahooquotes
+(ns sq.yahoo-quotes
   (:require [clj-time.format :as fmt]
             [clojure.data.json :as json]))
 

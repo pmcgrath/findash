@@ -1,4 +1,4 @@
-(ns sq.refdata
+(ns sq.ref-data
   (:require [clojure.xml :as xml]))
 
 ; Research indicated this is being maintained 

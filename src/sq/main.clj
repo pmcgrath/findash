@@ -2,7 +2,7 @@
   (:require [clojure.core.async :refer [<!! chan tap]]
             [clojure.tools.logging :as log]
             [sq.hub :as hub]
-            [sq.quoteswatcher :as quoteswatcher]
+            [sq.quotes-watcher :as quotes-watcher]
             [sq.store :as store]
             [sq.web :as web])
   (:gen-class))
@@ -28,7 +28,7 @@
   (log/info "Starting quotes watcher")
   (let [get-config-fn store/get-config
         new-quotes-pub-ch (hub/get-item :new-quotes-ch)] 
-    (quoteswatcher/start get-config-fn new-quotes-pub-ch))
+    (quotes-watcher/start get-config-fn new-quotes-pub-ch))
 
   (log/info "Starting TEMP local quotes logger")
   (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 

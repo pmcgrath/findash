@@ -1,12 +1,12 @@
-(ns sq.quoteswatcher
+(ns sq.quotes-watcher
   (:require [clojure.core.async :refer [<! >! go-loop timeout]]
             [clojure.tools.logging :as log]
-            [sq.yahooquotes :as yahooquotes]))
+            [sq.yahoo-quotes :as yahoo-quotes]))
 
 (defn get-acquirer-fn 
   []
   (fn [config]
-    (yahooquotes/acquire config)))
+    (yahoo-quotes/acquire config)))
 
 (defn run-acquire-quotes-loop
   [get-config-fn new-quotes-pub-ch acquirer-fn]

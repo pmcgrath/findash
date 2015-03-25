@@ -1,6 +1,6 @@
-(ns sq.refdata-test
+(ns sq.ref-data-test
   (:require [clojure.test :refer :all]
-            [sq.refdata :refer :all]))
+            [sq.ref-data :refer :all]))
 
 (deftest get-currency-iso-alpha-codes-test
   (testing "Get currency codes"
