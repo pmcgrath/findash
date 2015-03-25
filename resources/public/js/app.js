@@ -33,10 +33,11 @@
     }
   };
 
-  /* Make this a mixin ? Would need to have register\de-register methods rather than passing in handler funcs as could be used my multiple components so would need multiple registrations from each component */
+  /* Make this a mixin ? Havn't included a de-register method - one instance needs to work for a single socket url */
   var socket = {
     onDisconnectedRetryIntervalInMs: 5000,
-    open: function(url, quotesUpdatedHandlerFn) {
+    messageHandlers: {},
+    open: function(url) {
       var socket = new WebSocket(url);
       socket.onerror = function(error) {
         console.log('socket onerror :' + error.toString());
@@ -47,19 +48,21 @@
       socket.onmessage = function(event) {
         console.log('socket onmessage : Received data');
         var data = JSON.parse(event.data);
-        switch(data.messageType) {
-          case 'quote-updates':
-            quotesUpdatedHandlerFn(data.quotes);
-            break;
-          default:
-            console.log('No handler for message-type');
+        if (this.messageHandlers[data.messageType] != null) {
+           this.messageHandlers[data.messageType](data);
+        } else {
+            console.log('No handler for message-type : ' + data.messageType);
         }
-      };
+      }.bind(this);
       socket.onclose = function(event) {
         console.log('socket onclose : Disconnected: ' + event.code + ' ' + event.reason);
         socket = null;
         setTimeout(function() { this.open(url, quotesUpdatedHandlerFn); }.bind(this), this.onDisconnectedRetryIntervalInMs);
       }.bind(this);
+    },
+    registerMessageHandler(messageType, handlerFn) {
+      // Only one per message type
+      this.messageHandlers[messageType] = handlerFn;
     }
   };
 
@@ -213,9 +216,10 @@
     },
     runQuotesUpdateListener: function() {
       var url = 'ws://' + this.props.host + '/ws';
-      this.props.socket.open(
-        url,
-        function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this));
+      this.props.socket.open(url);
+      this.props.socket.registerMessageHandler(
+        'quote-updates',
+        function(data) { this.mergeNewQuotesUpdatingState(data.quotes); }.bind(this));
     },
     getInitialState: function() {
       return {quotes: []};
