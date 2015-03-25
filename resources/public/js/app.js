@@ -118,7 +118,7 @@
   });
 
   var AddStockForm = React.createClass({
-    onChange: function(fieldName, event) {
+    onFormChange: function(fieldName, event) {
       // Will rebuild if applicable
       var error = '';
       // Existing state
@@ -140,11 +140,8 @@
       var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
       this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
     },
-    onSymbolChange: function(event) {
-      this.onChange('symbol', event);
-    },
-    onCurrencyChange: function(event) {
-      this.onChange('currency', event);
+    onFieldChange: function(fieldName, fn) {
+      return function(event) { fn(fieldName, event); }
     },
     handleSubmit: function(e) {
       e.preventDefault();
@@ -165,8 +162,8 @@
         // TEMP DIV so we can see the state, JSX requires a wrapper
         <div>
           <form className='addStockForm' onSubmit={this.handleSubmit}>
-            <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onSymbolChange} />
-            <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onCurrencyChange} />
+            <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onFieldChange("symbol", this.onFormChange)} />
+            <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange("currency", this.onFormChange)} />
             <input className='addStock' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
           <image className={'addStockWorkingImage ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
