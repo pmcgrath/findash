@@ -1,12 +1,17 @@
-(ns sq.currency
+(ns sq.refdata
   (:require
     [clojure.xml :as xml]))
 
-(def ^:private url "http://www.currency-iso.org/dam/downloads/table_a1.xml")
+; Research indicated this is being maintained 
+;   http://www.iso.org/iso/home/standards/currency_codes.htm
+;   http://www.currency-iso.org/en/home.html
+; Could have used simplier json links but I can't be sure of updates, hence we use this source
+(def ^:private url 
+  "http://www.currency-iso.org/dam/downloads/table_a1.xml")
 
 (defn- acquire-countries
   []
-  ; See comment below
+  ; See comment below for parsing details
   (let [xml (xml/parse url)
         countries (->> xml :content first :content (map (fn [country] (:content country))))
         create-country-map-reducer-fn (fn [accum, country-attrib] (assoc accum (:tag country-attrib) (-> country-attrib :content first)))
@@ -22,15 +27,12 @@
   (->> @countries (map :Ccy) (remove nil?) distinct sort))
 
 (comment
-; http://blog.korny.info/2014/03/08/xml-for-fun-and-profit.html
-; See http://stackoverflow.com/questions/1194044/clojure-xml-parsing
-; **** Used the following in the REPL to investigate this stuff
+; **** Used the following in the REPL to investigate xml parsing
+; See http://blog.korny.info/2014/03/08/xml-for-fun-and-profit.html
+;     http://stackoverflow.com/questions/1194044/clojure-xml-parsing
 (require '[clojure.xml :as xml])
 
-(defn parse [xml-string]
-   (xml/parse
-     (java.io.ByteArrayInputStream. (.getBytes xml-string))))
-
+; Based on curl http://www.currency-iso.org/dam/downloads/table_a1.xml
 (def raw-xml "<ISO_4217 Pblshd=\"2015-01-01\">
   <CcyTbl>
     <CcyNtry>
@@ -45,7 +47,7 @@
   </CcyTbl>
 </ISO_4217>")
 
-(def xml (parse raw-xml))
+(def xml (xml/parse (java.io.ByteArrayInputStream. (.getBytes raw-xml))))
 (pprint xml)
 
 (def countries (->> xml :content first :content (map (fn [country] (:content country)))))
