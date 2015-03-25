@@ -1,23 +1,58 @@
 (ns sq.currency
   (:require
-    [clojure.data.zip.xml :as zipxml]
-    [clojure.xml :as xml]
-    [clojure.zip :as zip]))
+    [clojure.xml :as xml]))
 
-(def url "http://www.currency-iso.org/dam/downloads/table_a1.xml")
+(def ^:private url "http://www.currency-iso.org/dam/downloads/table_a1.xml")
 
-(defn acquire-currency-iso-alpha-codes
+(defn- acquire-countries
   []
-  ; See http://stackoverflow.com/questions/1194044/clojure-xml-parsing
-  ; See commit f95150520d95f1e82353bf8bce0cb59bd6784593 to see parsing the xml without clojure.data.zip.xml - git show 92589d043129466768089469dd0e19753d5caabc
-  (let [data (xml/parse url)
-        zipped (zip/xml-zip data)
-        currency-codes  (zipxml/xml-> zipped :CcyTbl :CcyNtry :Ccy zipxml/text)]
-    (-> currency-codes distinct sort)))
+  ; See comment below
+  (let [xml (xml/parse url)
+        countries (->> xml :content first :content (map (fn [country] (:content country))))
+        create-country-map-reducer-fn (fn [accum, country-attrib] (assoc accum (:tag country-attrib) (-> country-attrib :content first)))
+        create-country-map-fn (fn [country] (reduce create-country-map-reducer-fn {} country))]
+    (map create-country-map-fn countries)))
 
-(def ^:private iso-alpha-codes (future (acquire-currency-iso-alpha-codes)))
+(def ^:private countries (future (acquire-countries)))
 
 (defn get-currency-iso-alpha-codes
   []
   ; Using a future as this data should only be acquired once, rarely changes
-  @iso-alpha-codes)
+  ; Sorted distinct and all non nil currencies (Antartica has no currency)
+  (->> @countries (map :Ccy) (remove nil?) distinct sort))
+
+(comment
+; http://blog.korny.info/2014/03/08/xml-for-fun-and-profit.html
+; See http://stackoverflow.com/questions/1194044/clojure-xml-parsing
+; **** Used the following in the REPL to investigate this stuff
+(require '[clojure.xml :as xml])
+
+(defn parse [xml-string]
+   (xml/parse
+     (java.io.ByteArrayInputStream. (.getBytes xml-string))))
+
+(def raw-xml "<ISO_4217 Pblshd=\"2015-01-01\">
+  <CcyTbl>
+    <CcyNtry>
+      <CtryNm>AFGHANISTAN</CtryNm><CcyNm>Afghani</CcyNm><Ccy>AFN</Ccy><CcyNbr>971</CcyNbr><CcyMnrUnts>2</CcyMnrUnts>
+    </CcyNtry>
+    <CcyNtry>
+      <CtryNm>ÅLAND ISLANDS</CtryNm><CcyNm>Euro</CcyNm><Ccy>EUR</Ccy><CcyNbr>978</CcyNbr><CcyMnrUnts>2</CcyMnrUnts>
+    </CcyNtry>
+    <CcyNtry>
+      <CtryNm>BBBB</CtryNm><CcyNm>Euro</CcyNm><Ccy>EUR</Ccy><CcyNbr>978</CcyNbr><CcyMnrUnts>2</CcyMnrUnts>
+    </CcyNtry>
+  </CcyTbl>
+</ISO_4217>")
+
+(def xml (parse raw-xml))
+(pprint xml)
+
+(def countries (->> xml :content first :content (map (fn [country] (:content country)))))
+(pprint countries)
+
+(defn create-country-map
+  [country]
+  (reduce (fn [accum, country-attrib] (assoc accum (:tag country-attrib) (-> country-attrib :content first))) {} country))
+(pprint (map create-country-map countries))
+)

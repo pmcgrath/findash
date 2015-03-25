@@ -7,7 +7,6 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/data.xml "0.0.8"]
-                 [org.clojure/data.zip "0.1.1"]
                  [org.clojure/tools.logging "0.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.8.0"]  
