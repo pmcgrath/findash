@@ -1,6 +1,5 @@
 (ns sq.json
-  (:require
-    [cheshire.core :as cheshire]))
+  (:require [cheshire.core :as cheshire]))
 
 ; See https://www.snip2code.com/Snippet/106966/Simple-clojure-Ring-example
 (extend-protocol cheshire.generate/JSONable

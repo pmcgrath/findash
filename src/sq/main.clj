@@ -1,12 +1,11 @@
-(ns sq.main 
-  (:gen-class)
-  (:require
-    [clojure.core.async :refer [<!! chan tap]]
-    [clojure.tools.logging :as log]
-    [sq.hub :as hub]
-    [sq.quoteswatcher :as quoteswatcher]
-    [sq.store :as store]
-    [sq.web :as web]))
+(ns sq.main
+  (:require [clojure.core.async :refer [<!! chan tap]]
+            [clojure.tools.logging :as log]
+            [sq.hub :as hub]
+            [sq.quoteswatcher :as quoteswatcher]
+            [sq.store :as store]
+            [sq.web :as web])
+  (:gen-class))
 
 (defn -main 
   [& args]

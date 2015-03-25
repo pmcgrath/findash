@@ -1,9 +1,8 @@
 (ns sq.json-test
-  (:require 
-    [clojure.test :refer :all]
-    [clj-time.core :as time]
-    [ring.util.io :as io]
-    [sq.json :refer :all]))
+  (:require [clj-time.core :as time]
+            [clojure.test :refer :all]
+            [ring.util.io :as io]
+            [sq.json :refer :all]))
 
 (deftest generate-string-test
   (testing "Generate string"

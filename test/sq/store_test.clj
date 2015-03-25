@@ -1,8 +1,7 @@
 (ns sq.store-test
-  (:require 
-    [clojure.core.async :refer [>!! chan close!]]
-    [clojure.test :refer :all]
-    [sq.store :refer :all]))
+  (:require [clojure.core.async :refer [>!! chan close!]]
+            [clojure.test :refer :all]
+            [sq.store :refer :all]))
 
 (deftest update-latest-quotes!-test
   (testing "Update latest quotes - no previous quotes exist"

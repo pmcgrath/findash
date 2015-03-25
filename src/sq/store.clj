@@ -1,7 +1,6 @@
 (ns sq.store
-  (:require
-    [clojure.core.async :refer [<! go-loop]]
-    [sq.refdata :as refdata]))
+  (:require [clojure.core.async :refer [<! go-loop]]
+            [sq.refdata :as refdata]))
 
 (def ^:private default-config { 
   :port 3000

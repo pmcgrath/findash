@@ -1,10 +1,9 @@
 (ns sq.socket
-  (:require
-    [clojure.core.async :refer [<! chan close! go-loop mult tap untap]]
-    [clojure.tools.logging :as log]
-    [compojure.core :refer :all]
-    [org.httpkit.server :as httpkit]
-    [sq.json :as json]))
+  (:require [clojure.core.async :refer [<! chan close! go-loop mult tap untap]]
+            [clojure.tools.logging :as log]
+            [compojure.core :refer :all]
+            [org.httpkit.server :as httpkit]
+            [sq.json :as json]))
 
 (def mult-quotes-ch (promise))
 

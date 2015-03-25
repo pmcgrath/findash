@@ -1,13 +1,12 @@
 (ns sq.web
-  (:require
-    [compojure.core :refer :all]
-    [compojure.route :as route]
-    [compojure.handler :as handler]
-    [hiccup.page :as page]
-    [org.httpkit.server :as httpkit]
-    [sq.json :as json]
-    [sq.store :as store]
-    [sq.socket :as socket]))
+  (:require [compojure.core :refer :all]
+            [compojure.handler :as handler]
+            [compojure.route :as route]
+            [hiccup.page :as page]
+            [org.httpkit.server :as httpkit]
+            [sq.json :as json]
+            [sq.socket :as socket]
+            [sq.store :as store]))
 
 (defn get-home-page-handler
   [request]

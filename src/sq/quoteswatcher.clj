@@ -1,8 +1,7 @@
 (ns sq.quoteswatcher
-  (:require 
-    [clojure.core.async :refer [<! >! go-loop timeout]]
-    [clojure.tools.logging :as log]
-    [sq.yahooquotes :as yahooquotes]))
+  (:require [clojure.core.async :refer [<! >! go-loop timeout]]
+            [clojure.tools.logging :as log]
+            [sq.yahooquotes :as yahooquotes]))
 
 (defn get-acquirer-fn 
   []

@@ -1,6 +1,5 @@
 (ns sq.refdata
-  (:require
-    [clojure.xml :as xml]))
+  (:require [clojure.xml :as xml]))
 
 ; Research indicated this is being maintained 
 ;   http://www.iso.org/iso/home/standards/currency_codes.htm

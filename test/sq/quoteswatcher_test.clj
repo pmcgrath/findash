@@ -1,9 +1,7 @@
 (ns sq.quoteswatcher-test
-  (:require 
-    [clojure.test :refer :all]
-    [clojure.core.async :refer [<!! alts!! chan close! timeout]]
-    [clj-time.core :as time]
-    [sq.quoteswatcher :refer :all]))
+  (:require [clojure.core.async :refer [<!! alts!! chan close! timeout]]
+            [clojure.test :refer :all]
+            [sq.quoteswatcher :refer :all]))
 
 (deftest get-acquirer-fn-test
   (testing "Get acquirer function - Currently only one acquirer"

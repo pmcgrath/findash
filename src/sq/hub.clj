@@ -1,6 +1,5 @@
 (ns sq.hub
-  (:require 
-    [clojure.core.async :refer [chan mult]]))
+  (:require [clojure.core.async :refer [chan mult]]))
 
 (def ^:private store (atom {}))
 

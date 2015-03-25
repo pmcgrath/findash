@@ -1,7 +1,6 @@
 (ns sq.yahooquotes
-  (:require 
-    [clojure.data.json :as json]
-    [clj-time.format :as fmt]))
+  (:require [clj-time.format :as fmt]
+            [clojure.data.json :as json]))
 
 (defn get-comma-separated-symbols
   [config] 
