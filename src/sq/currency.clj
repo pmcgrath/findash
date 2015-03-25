@@ -6,7 +6,7 @@
 
 (def url "http://www.currency-iso.org/dam/downloads/table_a1.xml")
 
-(defn get-currency-iso-alpha-codes
+(defn acquire-currency-iso-alpha-codes
   []
   ; See http://stackoverflow.com/questions/1194044/clojure-xml-parsing
   ; See commit f95150520d95f1e82353bf8bce0cb59bd6784593 to see parsing the xml without clojure.data.zip.xml - git show 92589d043129466768089469dd0e19753d5caabc
@@ -14,3 +14,10 @@
         zipped (zip/xml-zip data)
         currency-codes  (zipxml/xml-> zipped :CcyTbl :CcyNtry :Ccy zipxml/text)]
     (-> currency-codes distinct sort)))
+
+(def ^:private iso-alpha-codes (future (acquire-currency-iso-alpha-codes)))
+
+(defn get-currency-iso-alpha-codes
+  []
+  ; Using a future as this data should only be acquired once, rarely changes
+  @iso-alpha-codes)
