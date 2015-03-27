@@ -56,17 +56,50 @@
       }.bind(this);
       socket.onclose = function(event) {
         console.log('socket onclose : Disconnected: ' + event.code + ' ' + event.reason);
-        socket = null;
-        setTimeout(function() { this.open(url, quotesUpdatedHandlerFn); }.bind(this), this.onDisconnectedRetryIntervalInMs);
+        socket.onerror = socket.onopen = socket.onmessage = socket.close = socket = null;
+        setTimeout(function() { this.open(url); }.bind(this), this.onDisconnectedRetryIntervalInMs);
       }.bind(this);
     },
     registerMessageHandler(messageType, handlerFn) {
       // Only one per message type
       this.messageHandlers[messageType] = handlerFn;
+    },
+    deregisterMessageHandler(messageType) {
+      // Only one per message type
+      this.messageHandlers[messageType] = null;
     }
   };
 
   var App = React.createClass({
+    openSocket: function() {
+      var url = 'ws://' + this.props.host + '/ws';
+      this.props.socket.open(url);
+    },
+    getCurrenciesList: function() {
+      var url = this.props.protocol + '//' + this.props.host + '/api/currencies';
+      this.props.ajax.getJsonData(
+        url,
+        function(currencies) { this.setState({currencies: currencies}); }.bind(this),
+        function(xhr)        { console.log('getCurrenciesList error status : ' + xhr.status); });
+    },
+    getInitialState: function() {
+      return {currencies: []};
+    },
+    componentDidMount: function() {
+      this.openSocket();
+      this.getCurrenciesList();
+    },
+    render: function() {
+      return (
+        <div className="app">
+          <Stocks protocol={this.props.protocol} host={this.props.host} currencies={this.state.currencies} ajax={this.props.ajax} socket={this.props.socket} />
+          <Currencies protocol={this.props.protocol} host={this.props.host} ajax={this.props.ajax} socket={this.props.socket} />
+        </div>
+      );
+    }
+  });
+
+  var Stocks = React.createClass({
     mergeNewQuotesUpdatingState: function(newQuotes) {
       // Create map of existing quotes - key is symbol and value is the existing quote
       var existingQuotesIndex = this.state.quotes.reduce(
@@ -103,9 +136,7 @@
         function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this),
         function(xhr)    { console.log('getInitialQuotes error status : ' + xhr.status); });
     },
-    runQuotesUpdateListener: function() {
-      var url = 'ws://' + this.props.host + '/ws';
-      this.props.socket.open(url);
+    subscribeForQuoteUpdates: function() {
       this.props.socket.registerMessageHandler(
         'quote-updates',
         function(data) { this.mergeNewQuotesUpdatingState(data.quotes); }.bind(this));
@@ -115,12 +146,13 @@
     },
     componentDidMount: function() {
       this.getInitialQuotes();
-      this.runQuotesUpdateListener();
+      this.subscribeForQuoteUpdates();
     },
     render: function() {
       return (
         <div className='stocks'>
-          <AddStock protocol={this.props.protocol} host={this.props.host} ajax={ajax} />
+          <h1>Quotes</h1>
+          <AddStock protocol={this.props.protocol} host={this.props.host} currencies={this.props.currencies} ajax={ajax} />
           <Quotes quotes={this.state.quotes} />
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
@@ -143,10 +175,11 @@
           error = 'Symbol must be at least 4 chars long';
         }
       }
-      if (fieldName === 'currency') {
+      else if (fieldName === 'currency') {
         newCurrency = event.target.value.trim().toUpperCase();
         // Pending - Do some validation
       }
+
       // Determine if submission allowed - content to submit exists and no error
       var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
       this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
@@ -169,11 +202,15 @@
       return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
     },
     render: function() {
+      var currencyNodes = this.props.currencies
+        .map(function(currency, index) { return (<option value={currency} key={index}>{currency}</option>); });
       return (
         <div className='add-stock'>
           <form onSubmit={this.handleSubmit}>
             <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onFieldChange('symbol', this.onFormChange)} />
-            <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange('currency', this.onFormChange)} />
+            <select placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange('currency', this.onFormChange)}>
+              {currencyNodes}
+            </select>
             <input className='add-stock-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
           <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
@@ -188,16 +225,14 @@
     render: function() {
       var quoteNodes = this.props.quotes
         .sort(function(quote1, quote2) { return quote1.symbol.localeCompare(quote2.symbol); })
-        .map(function(quote, index) { return (<Quote quote={quote} key={index} />);
-      });
+        .map(function(quote, index) { return (<Quote quote={quote} key={index} />); });
       return (
         <div className='quotes'>
-          <h1>Quotes</h1>
-          <div className="quote-list">
-            <div className="quote-entry header">
-              <div className="quote symbol">Symbol</div>
-              <div className="quote timestamp">As of</div>
-              <div className="quote price">Price</div>
+          <div className='quote-list'>
+            <div className='quote-entry header'>
+              <div className='quote symbol'>Symbol</div>
+              <div className='quote timestamp'>As of</div>
+              <div className='quote price'>Price</div>
             </div>
             {quoteNodes}
           </div>
@@ -238,6 +273,21 @@
           <div className={'quote price ' + priceMovementLabel}>
             {latestQuotePrice.price}
           </div>
+        </div>
+      );
+    }
+  });
+
+  var Currencies = React.createClass({
+    getInitialState: function() {
+      return {};
+    },
+    componentDidMount: function() {
+    },
+    render: function() {
+      return (
+        <div className='currencies'>
+          <h1>Currencies</h1>
         </div>
       );
     }

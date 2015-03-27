@@ -9,8 +9,11 @@ body {
 }
 
 .content {
-  display: flex;                   /* Flex style */
   width: 750px;
+}
+
+.app {
+  display: flex;                   /* Flex style */
 }
 
 .stocks {
@@ -68,3 +71,8 @@ body {
 .currencies {
   display: block;                   /* Reset syle */
 }
+
+.currencies {
+  display: block;                   /* Reset syle */
+}
+
