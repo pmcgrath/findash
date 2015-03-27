@@ -1,27 +1,70 @@
+/* 
+ * Using flexbox
+ *   See http://dev.w3.org/csswg/css-flexbox/
+ *       https://css-tricks.com/snippets/css/a-guide-to-flexbox/
+ *   Tested with chrome and firefox so not using vendor prefixes
+*/
 body {
   background-color: Cornsilk;
 }
 
-.symbol {
-  color: black;
-} 
-
-.price.up {
-  color: green;
+.content {
+  display: flex;                   /* Flex style */
+  width: 750px;
 }
 
-.price.unchanged {
-  color: black;
+.stocks {
+  display: block;                   /* Reset syle */
 }
 
-.price.down {
-  color: red;
+.add-stock-button {
 }
 
-.addStockWorkingImage.false {
+.saving-image.false {
   display: none;
 }
 
-.addStockWorkingImage.true {
+.saving-image.true {
   display: block;
+}
+
+.error {
+  color: red;
+}
+
+.quote-list {
+  display: flex;                   /* Flex style */
+  flex-flow: column;               /* Stack children - block style */
+}
+
+.quote-entry {
+  display: flex;                  /* Reset flex style so we have a new parent containe rin this context */
+}
+
+.quote-entry.header {
+  background-color: grey;
+}
+
+.quote.symbol {
+  flex: 1;
+}
+
+.quote.timestamp {
+  flex: 2;
+}
+
+.quote.price {
+  flex: 1;
+}
+
+.quote.price.down {
+  color: red;
+}
+
+.quote.price.up {
+  color: green;
+}
+
+.currencies {
+  display: block;                   /* Reset syle */
 }

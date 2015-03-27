@@ -66,114 +66,6 @@
     }
   };
 
-  var Quote = React.createClass({
-    determineLocaleDisplayTimestamp: function(quote) {
-      var timestamp = new Date(quote.timestamp);
-      var now = new Date();
-      if (timestamp.getUTCDate() != now.getUTCDate()) {
-        return timestamp.toLocaleString();
-      }
-      return timestamp.toLocaleTimeString();
-    },
-    determinePriceMovementLabel: function(quote) {
-      if (quote.prices.length < 2) { return 'unchanged'; }
-      var movementValue = quote.prices[quote.prices.length - 1].price - quote.prices[quote.prices.length - 2].price;
-      if (movementValue < 0) { return 'down'; }
-      if (movementValue === 0) { return 'unchanged'; }
-      return 'up';
-    },
-    render: function() {
-      var quote = this.props.quote;
-      var latestQuotePrice = quote.prices[quote.prices.length - 1];
-      var localeTimestamp = this.determineLocaleDisplayTimestamp(latestQuotePrice);
-      var priceMovementClassName = 'price ' + this.determinePriceMovementLabel(quote);
-      return (
-        <div className='quote'>
-          <div className='symbol'>
-            {quote.symbol}
-          </div>
-          <div className='timestamp'>
-            {localeTimestamp}
-          </div>
-          <div className={priceMovementClassName}>
-            {latestQuotePrice.price}
-          </div>
-        </div>
-      );
-    }
-  });
-
-  var QuoteList = React.createClass({
-    render: function() {
-      var quoteNodes = this.props.quotes
-        .sort(function(quote1, quote2) { return quote1.symbol.localeCompare(quote2.symbol); })
-        .map(function(quote, index) { return (<Quote quote={quote} key={index} />);
-      });
-      return (
-        <div className='quoteList'>
-          {quoteNodes}
-        </div>
-      );
-    }
-  });
-
-  var AddStockForm = React.createClass({
-    onFormChange: function(fieldName, event) {
-      // Will rebuild if applicable
-      var error = '';
-      // Existing state
-      var newSymbol = this.state.symbol;
-      var newCurrency = this.state.currency;
-      // Process proposed change
-      if (fieldName === 'symbol') {
-        newSymbol = event.target.value.trim().toUpperCase();
-        // Pending - Do some validation
-        if (newSymbol.length > 0 && newSymbol.length < 4) {
-          error = 'Symbol must be at least 4 chars long';
-        }
-      }
-      if (fieldName === 'currency') {
-        newCurrency = event.target.value.trim().toUpperCase();
-        // Pending - Do some validation
-      }
-      // Determine if submission allowed - content to submit exists and no error
-      var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
-      this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
-    },
-    onFieldChange: function(fieldName, fn) {
-      return function(event) { fn(fieldName, event); }
-    },
-    handleSubmit: function(e) {
-      e.preventDefault();
-      this.setState({allowSubmission: false, isBeingSaved: true});
-      var url = this.props.protocol + '//' + this.props.host + '/api/stocks';
-      var data = {symbol: this.state.symbol, currency: this.state.currency};
-      this.props.ajax.postJsonData(
-        url,
-        data,
-        function(result) { this.setState(this.getInitialState()); }.bind(this),
-        function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
-    },
-    getInitialState: function() {
-      return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
-    },
-    render: function() {
-      return (
-        // TEMP DIV so we can see the state, JSX requires a wrapper
-        <div>
-          <form className='addStockForm' onSubmit={this.handleSubmit}>
-            <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onFieldChange("symbol", this.onFormChange)} />
-            <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange("currency", this.onFormChange)} />
-            <input className='addStock' type='submit' value='Add' disabled={!this.state.allowSubmission} />
-          </form>
-          <image className={'addStockWorkingImage ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
-          <div>{this.state.error}</div>
-          <pre>{JSON.stringify(this.state, null, 2)}</pre>
-        </div>
-      );
-    }
-  });
-
   var App = React.createClass({
     mergeNewQuotesUpdatingState: function(newQuotes) {
       // Create map of existing quotes - key is symbol and value is the existing quote
@@ -228,12 +120,124 @@
     render: function() {
       return (
         <div className='stocks'>
-          <AddStockForm protocol={this.props.protocol} host={this.props.host} ajax={ajax} />
-          <div className='quotes'>
-            <h1>Quotes</h1>
-            <QuoteList quotes={this.state.quotes} />
-          </div>
+          <AddStock protocol={this.props.protocol} host={this.props.host} ajax={ajax} />
+          <Quotes quotes={this.state.quotes} />
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
+        </div>
+      );
+    }
+  });
+  
+  var AddStock = React.createClass({
+    onFormChange: function(fieldName, event) {
+      // Will rebuild if applicable
+      var error = '';
+      // Existing state
+      var newSymbol = this.state.symbol;
+      var newCurrency = this.state.currency;
+      // Process proposed change
+      if (fieldName === 'symbol') {
+        newSymbol = event.target.value.trim().toUpperCase();
+        // Pending - Do some validation
+        if (newSymbol.length > 0 && newSymbol.length < 4) {
+          error = 'Symbol must be at least 4 chars long';
+        }
+      }
+      if (fieldName === 'currency') {
+        newCurrency = event.target.value.trim().toUpperCase();
+        // Pending - Do some validation
+      }
+      // Determine if submission allowed - content to submit exists and no error
+      var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
+      this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
+    },
+    onFieldChange: function(fieldName, fn) {
+      return function(event) { fn(fieldName, event); }
+    },
+    handleSubmit: function(e) {
+      e.preventDefault();
+      this.setState({allowSubmission: false, isBeingSaved: true});
+      var url = this.props.protocol + '//' + this.props.host + '/api/stocks';
+      var data = {symbol: this.state.symbol, currency: this.state.currency};
+      this.props.ajax.postJsonData(
+        url,
+        data,
+        function(result) { this.setState(this.getInitialState()); }.bind(this),
+        function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
+    },
+    getInitialState: function() {
+      return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
+    },
+    render: function() {
+      return (
+        <div className='add-stock'>
+          <form onSubmit={this.handleSubmit}>
+            <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onFieldChange('symbol', this.onFormChange)} />
+            <input type='text' placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange('currency', this.onFormChange)} />
+            <input className='add-stock-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
+          </form>
+          <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
+          <span className='error'>{this.state.error}</span>
+          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+        </div>
+      );
+    }
+  });
+  
+  var Quotes = React.createClass({
+    render: function() {
+      var quoteNodes = this.props.quotes
+        .sort(function(quote1, quote2) { return quote1.symbol.localeCompare(quote2.symbol); })
+        .map(function(quote, index) { return (<Quote quote={quote} key={index} />);
+      });
+      return (
+        <div className='quotes'>
+          <h1>Quotes</h1>
+          <div className="quote-list">
+            <div className="quote-entry header">
+              <div className="quote symbol">Symbol</div>
+              <div className="quote timestamp">As of</div>
+              <div className="quote price">Price</div>
+            </div>
+            {quoteNodes}
+          </div>
+        </div>
+      );
+    }
+  });
+  
+  var Quote = React.createClass({
+    determineLocaleDisplayTimestamp: function(quote) {
+      var timestamp = new Date(quote.timestamp);
+      var now = new Date();
+      if (timestamp.getUTCDate() != now.getUTCDate()) {
+        return timestamp.toLocaleString();
+      }
+      return timestamp.toLocaleTimeString();
+    },
+    determinePriceMovementLabel: function(quote) {
+      if (quote.prices.length < 2) { return 'unchanged'; }
+      var movementValue = quote.prices[quote.prices.length - 1].price - quote.prices[quote.prices.length - 2].price;
+      if (movementValue < 0) { return 'down'; }
+      if (movementValue === 0) { return 'unchanged'; }
+      return 'up';
+    },
+    render: function() {
+      var quote = this.props.quote;
+      var latestQuotePrice = quote.prices[quote.prices.length - 1];
+      var localeTimestamp = this.determineLocaleDisplayTimestamp(latestQuotePrice);
+      var priceMovementLabel = this.determinePriceMovementLabel(quote);
+      return (
+        <div className='quote-entry'>
+          <div className='quote symbol'>
+            {quote.symbol}
+          </div>
+          <div className='quote timestamp'>
+            {localeTimestamp}
+          </div>
+          <div className={'quote price ' + priceMovementLabel}>
+            {latestQuotePrice.price}
+          </div>
         </div>
       );
     }
