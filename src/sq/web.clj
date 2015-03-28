@@ -18,7 +18,7 @@
       (page/include-js "/js/JSXTransformer-0.13.1.js")]
     [:body
       [:div {:class "content" :id "content"}]
-      [:script {:type "text/jsx;harmony=true", :src "/js/app.js"}]]))
+      [:script {:type "text/jsx", :src "/js/app.js"}]]))
 
 (defn get-currencies-service-handler
   [request]

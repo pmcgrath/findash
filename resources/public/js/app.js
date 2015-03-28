@@ -1,12 +1,15 @@
 /*
+  See
+    http://facebook.github.io/react/docs/tutorial.html
 
   Props validation
     Not using propTypes for validation as we will be using the minified version of react which will not write console warnings
     Could use  componentWillReceiveProps lifecycle function where the first parameter is the props object, could validate each member
 
 */
+'use strict';
+
 (function() {
-  'use strict';
 
   /* Make this a mixin ? */
   var ajax = {
@@ -42,6 +45,7 @@
     },
 
     createForBaseUrl: function(baseUrl) {
+      // Returns a wrapper so the client does not neet to remember the base url
       return {
         getJsonData: function(url, successFn, errorFn) {
           this.getJsonData(baseUrl + url, successFn, errorFn);
@@ -84,13 +88,13 @@
       }.bind(this);
     },
 
-    registerMessageHandler(messageType, handlerFn) {
+    registerMessageHandler: function(messageType, handlerFn) {
       // Only one per message type
       console.log("Registering message handler for " + messageType);
       this.messageHandlers[messageType] = handlerFn;
     },
 
-    deregisterMessageHandler(messageType) {
+    deregisterMessageHandler: function(messageType) {
       // Only one per message type
       console.log("DeRegistering message handler for " + messageType);
       this.messageHandlers[messageType] = null;
