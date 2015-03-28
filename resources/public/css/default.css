@@ -18,6 +18,10 @@ body {
 
 .stocks {
   display: block;                   /* Reset syle */
+  flex: 1;
+}
+
+.add-stock {
 }
 
 .add-stock-button {
@@ -70,9 +74,11 @@ body {
 
 .currencies {
   display: block;                   /* Reset syle */
+  flex: 1;
 }
 
-.currencies {
-  display: block;                   /* Reset syle */
+.add-rate {
 }
 
+.add-rate-button {
+}

@@ -6,8 +6,8 @@
     makeJsonRequest: function(url, method, data, successFn, errorFn) {
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4) {
-          if (xhr.status == 200) {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
             var data = JSON.parse(xhr.response);
             successFn(data);
           } else {
@@ -93,7 +93,7 @@
       return (
         <div className="app">
           <Stocks protocol={this.props.protocol} host={this.props.host} currencies={this.state.currencies} ajax={this.props.ajax} socket={this.props.socket} />
-          <Currencies protocol={this.props.protocol} host={this.props.host} ajax={this.props.ajax} socket={this.props.socket} />
+          <Currencies protocol={this.props.protocol} host={this.props.host} currencies={this.state.currencies} ajax={this.props.ajax} socket={this.props.socket} />
         </div>
       );
     }
@@ -101,6 +101,11 @@
 
   var Stocks = React.createClass({
     mergeNewQuotesUpdatingState: function(newQuotes) {
+      // Cater for no new quotes
+      if (newQuotes === null || newQuotes.length === 0) {
+        // Do nothing 
+        return;
+      }
       // Create map of existing quotes - key is symbol and value is the existing quote
       var existingQuotesIndex = this.state.quotes.reduce(
         function(accum, quote, index, array) { accum[quote.symbol] = quote; return accum; },
@@ -181,7 +186,7 @@
       }
 
       // Determine if submission allowed - content to submit exists and no error
-      var allowSubmission = (((newSymbol + newCurrency).length > 0) && (error.length === 0));
+      var allowSubmission = ((newSymbol != '' && newCurrency != '') && (error.length === 0));
       this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
     },
     onFieldChange: function(fieldName, fn) {
@@ -202,15 +207,11 @@
       return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
     },
     render: function() {
-      var currencyNodes = this.props.currencies
-        .map(function(currency, index) { return (<option value={currency} key={index}>{currency}</option>); });
       return (
         <div className='add-stock'>
           <form onSubmit={this.handleSubmit}>
             <input type='text' placeholder='Symbol' value={this.state.symbol} onChange={this.onFieldChange('symbol', this.onFormChange)} />
-            <select placeholder='Currency' value={this.state.currency} onChange={this.onFieldChange('currency', this.onFormChange)}>
-              {currencyNodes}
-            </select>
+            <CurrencyDropDown currencies={this.props.currencies} value={this.state.currency} onChange={this.onFieldChange('currency', this.onFormChange)} />
             <input className='add-stock-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
           <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
@@ -220,7 +221,25 @@
       );
     }
   });
-  
+
+  var CurrencyDropDown = React.createClass({
+    render: function() {
+      console.log("-----> " + this.props.currencies.length);
+      // Create currencies collection with some specific currencies first
+      var currenciesToAppearFirst = ['EUR', 'USD', 'GBP'];
+      var currencies = this.props.currencies.filter(function(currency) { return (currenciesToAppearFirst.indexOf(currency) === -1); });
+      for (var index = currenciesToAppearFirst.length - 1; index >= 0; index--) { currencies.unshift(currenciesToAppearFirst[index]); }
+      // Currency nodes
+      var currencyNodes = currencies.map(function(currency, index) { return (<option value={currency} key={index}>{currency}</option>); });
+      return (
+        <select placeholder='Currency' value={this.props.value} onChange={this.props.onChange}>
+          <option value='' selected disabled>Select</option>
+          {currencyNodes}
+        </select>
+      );
+    }
+  });
+
   var Quotes = React.createClass({
     render: function() {
       var quoteNodes = this.props.quotes
@@ -288,6 +307,63 @@
       return (
         <div className='currencies'>
           <h1>Currencies</h1>
+          <AddRate protocol={this.props.protocol} host={this.props.host} currencies={this.props.currencies} ajax={ajax} />
+          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+        </div>
+      );
+    }
+  });
+  
+  var AddRate = React.createClass({
+    onFormChange: function(fieldName, event) {
+      // Will rebuild if applicable
+      var error = '';
+      // Existing state
+      var newFrom = this.state.from;
+      var newTo = this.state.to;
+      // Process proposed change
+      if (fieldName === 'from') {
+        newFrom = event.target.value;
+      }
+      else if (fieldName === 'to') {
+        newTo = event.target.value;
+      }
+      if (((newFrom != '') && (newTo != '')) && (newFrom == newTo)) {
+        error = 'Select a different target currency';
+      }
+
+      // Determine if submission allowed - content to submit exists
+      var allowSubmission = ((newFrom != '' && newTo != '') && (error.length === 0));
+      this.setState({from: newFrom, to: newTo, allowSubmission: allowSubmission, error: error});
+    },
+    onFieldChange: function(fieldName, fn) {
+      return function(event) { fn(fieldName, event); }
+    },
+    handleSubmit: function(e) {
+      e.preventDefault();
+      this.setState({allowSubmission: false, isBeingSaved: true});
+      var url = this.props.protocol + '//' + this.props.host + '/api/rates';
+      var data = {from: this.state.from, to: this.state.to};
+      this.props.ajax.postJsonData(
+        url,
+        data,
+        function(result) { this.setState(this.getInitialState()); }.bind(this),
+        function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
+    },
+    getInitialState: function() {
+      return {from: '', to: '', allowSubmission: false, isBeingSaved: false, error: ''};
+    },
+    render: function() {
+      return (
+        <div className='add-rate'>
+          <form onSubmit={this.handleSubmit}>
+            <CurrencyDropDown currencies={this.props.currencies} value={this.state.from} onChange={this.onFieldChange('from', this.onFormChange)} />
+            <CurrencyDropDown currencies={this.props.currencies} value={this.state.to} onChange={this.onFieldChange('to', this.onFormChange)} />
+            <input className='add-rate-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
+          </form>
+          <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
+          <span className='error'>{this.state.error}</span>
+          <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
       );
     }
