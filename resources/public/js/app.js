@@ -1,3 +1,10 @@
+/*
+
+  Props validation
+    Not using propTypes for validation as we will be using the minified version of react which will not write console warnings
+    Could use  componentWillReceiveProps lifecycle function where the first parameter is the props object, could validate each member
+
+*/
 (function() {
   'use strict';
 
@@ -25,18 +32,34 @@
         xhr.send(JSON.stringify(data, null, 2));
       }
     },
+
     getJsonData: function(url, successFn, errorFn) {
       this.makeJsonRequest(url, 'GET', null, successFn, errorFn);
     },
+
     postJsonData: function(url, data, successFn, errorFn) {
       this.makeJsonRequest(url, 'POST', data, successFn, errorFn);
+    },
+
+    createForBaseUrl: function(baseUrl) {
+      return {
+        getJsonData: function(url, successFn, errorFn) {
+          this.getJsonData(baseUrl + url, successFn, errorFn);
+        }.bind(this),
+
+        postJsonData: function(url, data, successFn, errorFn) {
+          this.postJsonData(baseUrl + url, successFn, errorFn);
+        }.bind(this)
+      }
     }
   };
 
   /* Make this a mixin ? Havn't included a de-register method - one instance needs to work for a single socket url */
   var socket = {
     onDisconnectedRetryIntervalInMs: 5000,
+
     messageHandlers: {},
+
     open: function(url) {
       var socket = new WebSocket(url);
       socket.onerror = function(error) {
@@ -60,40 +83,61 @@
         setTimeout(function() { this.open(url); }.bind(this), this.onDisconnectedRetryIntervalInMs);
       }.bind(this);
     },
+
     registerMessageHandler(messageType, handlerFn) {
       // Only one per message type
+      console.log("Registering message handler for " + messageType);
       this.messageHandlers[messageType] = handlerFn;
     },
+
     deregisterMessageHandler(messageType) {
       // Only one per message type
+      console.log("DeRegistering message handler for " + messageType);
       this.messageHandlers[messageType] = null;
     }
   };
 
   var App = React.createClass({
-    openSocket: function() {
-      var url = 'ws://' + this.props.host + '/ws';
-      this.props.socket.open(url);
+    getAjaxForBaseUrl: function() {
+      return this.props.ajax.createForBaseUrl(this.props.baseUrl);
     },
+
+    openSocket: function() {
+      this.props.socket.open(this.props.socketUrl);
+    },
+
     getCurrenciesList: function() {
-      var url = this.props.protocol + '//' + this.props.host + '/api/currencies';
-      this.props.ajax.getJsonData(
-        url,
+      this.state.ajax.getJsonData(
+        'api/currencies',
         function(currencies) { this.setState({currencies: currencies}); }.bind(this),
         function(xhr)        { console.log('getCurrenciesList error status : ' + xhr.status); });
     },
+  
     getInitialState: function() {
-      return {currencies: []};
+      var ajaxForBaseUrl = this.getAjaxForBaseUrl(); // We need to do this before render so children components can use
+      return {currencies: [], ajax: ajaxForBaseUrl};
     },
+
+    getDefaultProps: function() {
+      // What if being served from an app ? i.e. http://localhost/theapp
+      var baseUrl = window.location.protocol + '//' + window.location.host + '/';
+      var socketUrl = baseUrl.replace('http', 'ws') + 'ws'; // Takes care of http->ws and https->wss 
+      return {
+        baseUrl: baseUrl,
+        socketUrl: socketUrl,
+      };
+    },
+
     componentDidMount: function() {
       this.openSocket();
       this.getCurrenciesList();
     },
+
     render: function() {
       return (
         <div className="app">
-          <Stocks protocol={this.props.protocol} host={this.props.host} currencies={this.state.currencies} ajax={this.props.ajax} socket={this.props.socket} />
-          <Currencies protocol={this.props.protocol} host={this.props.host} currencies={this.state.currencies} ajax={this.props.ajax} socket={this.props.socket} />
+          <Stocks currencies={this.state.currencies} ajax={this.state.ajax} socket={this.props.socket} />
+          <Currencies currencies={this.state.currencies} ajax={this.state.ajax} socket={this.props.socket} />
         </div>
       );
     }
@@ -134,30 +178,38 @@
       }
       this.setState({quotes: updatedQuotes});
     },
+
     getInitialQuotes: function() {
-      var url = this.props.protocol + '//' + this.props.host + '/api/quotes';
       this.props.ajax.getJsonData(
-        url,
+        'api/quotes',
         function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this),
         function(xhr)    { console.log('getInitialQuotes error status : ' + xhr.status); });
     },
+
     subscribeForQuoteUpdates: function() {
       this.props.socket.registerMessageHandler(
         'quote-updates',
         function(data) { this.mergeNewQuotesUpdatingState(data.quotes); }.bind(this));
     },
+
     getInitialState: function() {
       return {quotes: []};
     },
+
     componentDidMount: function() {
       this.getInitialQuotes();
       this.subscribeForQuoteUpdates();
     },
+
+    componentWillUnmount: function() {
+      this.props.socket.deregisterMessageHandler('quote-updates');
+    },
+
     render: function() {
       return (
         <div className='stocks'>
           <h1>Quotes</h1>
-          <AddStock protocol={this.props.protocol} host={this.props.host} currencies={this.props.currencies} ajax={ajax} />
+          <AddStock currencies={this.props.currencies} ajax={ajax} />
           <Quotes quotes={this.state.quotes} />
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
@@ -189,23 +241,26 @@
       var allowSubmission = ((newSymbol != '' && newCurrency != '') && (error.length === 0));
       this.setState({symbol: newSymbol, currency: newCurrency, allowSubmission: allowSubmission, error: error});
     },
+
     onFieldChange: function(fieldName, fn) {
       return function(event) { fn(fieldName, event); }
     },
+
     handleSubmit: function(e) {
       e.preventDefault();
       this.setState({allowSubmission: false, isBeingSaved: true});
-      var url = this.props.protocol + '//' + this.props.host + '/api/stocks';
       var data = {symbol: this.state.symbol, currency: this.state.currency};
       this.props.ajax.postJsonData(
-        url,
+        'api/stocks',
         data,
         function(result) { this.setState(this.getInitialState()); }.bind(this),
         function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
     },
+
     getInitialState: function() {
       return {symbol: '', currency: '', allowSubmission: false, isBeingSaved: false, error: ''};
     },
+
     render: function() {
       return (
         <div className='add-stock'>
@@ -223,13 +278,14 @@
   });
 
   var CurrencyDropDown = React.createClass({
-    render: function() {
-      console.log("-----> " + this.props.currencies.length);
-      // Create currencies collection with some specific currencies first
+    getSource: function() {
       var currenciesToAppearFirst = ['EUR', 'USD', 'GBP'];
       var currencies = this.props.currencies.filter(function(currency) { return (currenciesToAppearFirst.indexOf(currency) === -1); });
-      for (var index = currenciesToAppearFirst.length - 1; index >= 0; index--) { currencies.unshift(currenciesToAppearFirst[index]); }
-      // Currency nodes
+      return currenciesToAppearFirst.reduceRight(function(accum, currency) { accum.unshift(currency); return accum; }, currencies);
+    },
+
+    render: function() {
+      var currencies = this.getSource();
       var currencyNodes = currencies.map(function(currency, index) { return (<option value={currency} key={index}>{currency}</option>); });
       return (
         <select placeholder='Currency' value={this.props.value} onChange={this.props.onChange}>
@@ -269,6 +325,7 @@
       }
       return timestamp.toLocaleTimeString();
     },
+
     determinePriceMovementLabel: function(quote) {
       if (quote.prices.length < 2) { return 'unchanged'; }
       var movementValue = quote.prices[quote.prices.length - 1].price - quote.prices[quote.prices.length - 2].price;
@@ -276,6 +333,7 @@
       if (movementValue === 0) { return 'unchanged'; }
       return 'up';
     },
+
     render: function() {
       var quote = this.props.quote;
       var latestQuotePrice = quote.prices[quote.prices.length - 1];
@@ -301,13 +359,12 @@
     getInitialState: function() {
       return {};
     },
-    componentDidMount: function() {
-    },
+    
     render: function() {
       return (
         <div className='currencies'>
           <h1>Currencies</h1>
-          <AddRate protocol={this.props.protocol} host={this.props.host} currencies={this.props.currencies} ajax={ajax} />
+          <AddRate currencies={this.props.currencies} ajax={ajax} />
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
       );
@@ -336,23 +393,26 @@
       var allowSubmission = ((newFrom != '' && newTo != '') && (error.length === 0));
       this.setState({from: newFrom, to: newTo, allowSubmission: allowSubmission, error: error});
     },
+
     onFieldChange: function(fieldName, fn) {
       return function(event) { fn(fieldName, event); }
     },
+
     handleSubmit: function(e) {
       e.preventDefault();
       this.setState({allowSubmission: false, isBeingSaved: true});
-      var url = this.props.protocol + '//' + this.props.host + '/api/rates';
       var data = {from: this.state.from, to: this.state.to};
       this.props.ajax.postJsonData(
-        url,
+        'api/rates',
         data,
         function(result) { this.setState(this.getInitialState()); }.bind(this),
         function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));
     },
+
     getInitialState: function() {
       return {from: '', to: '', allowSubmission: false, isBeingSaved: false, error: ''};
     },
+
     render: function() {
       return (
         <div className='add-rate'>
@@ -370,7 +430,7 @@
   });
 
   React.render(
-    <App protocol={window.location.protocol} host={window.location.host} ajax={ajax} socket={socket} />,
+    <App ajax={ajax} socket={socket} />,
     document.getElementById('content')
   );
 })();
