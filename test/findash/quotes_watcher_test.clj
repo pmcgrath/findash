@@ -1,7 +1,7 @@
-(ns sq.quotes-watcher-test
+(ns findash.quotes-watcher-test
   (:require [clojure.core.async :refer [<!! alts!! chan close! timeout]]
             [clojure.test :refer :all]
-            [sq.quotes-watcher :refer :all]))
+            [findash.quotes-watcher :refer :all]))
 
 (deftest get-acquirer-fn-test
   (testing "Get acquirer function - Currently only one acquirer"

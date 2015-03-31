@@ -1,4 +1,4 @@
-(ns sq.json
+(ns findash.json
   (:require [cheshire.core :as cheshire]))
 
 ; See https://www.snip2code.com/Snippet/106966/Simple-clojure-Ring-example

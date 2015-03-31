@@ -1,6 +1,6 @@
-(ns sq.store
+(ns findash.store
   (:require [clojure.core.async :refer [<! go-loop]]
-            [sq.ref-data :as ref-data]))
+            [findash.ref-data :as ref-data]))
 
 (def ^:private default-config { 
   :port 3000

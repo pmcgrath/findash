@@ -1,6 +1,6 @@
-(ns sq.hub-test
+(ns findash.hub-test
   (:require [clojure.test :refer :all]
-            [sq.hub :refer :all]))
+            [findash.hub :refer :all]))
 
 (deftest get-item-test
   (testing "Get item pre start - nothing to find in this case"

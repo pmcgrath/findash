@@ -1,4 +1,4 @@
-(ns sq.hub
+(ns findash.hub
   (:require [clojure.core.async :refer [chan mult]]))
 
 (def ^:private store (atom {}))

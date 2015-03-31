@@ -1,10 +1,10 @@
-(ns sq.main
+(ns findash.main
   (:require [clojure.core.async :refer [<!! chan tap]]
             [clojure.tools.logging :as log]
-            [sq.hub :as hub]
-            [sq.quotes-watcher :as quotes-watcher]
-            [sq.store :as store]
-            [sq.web :as web])
+            [findash.hub :as hub]
+            [findash.quotes-watcher :as quotes-watcher]
+            [findash.store :as store]
+            [findash.web :as web])
   (:gen-class))
 
 (defn -main 

@@ -1,5 +1,5 @@
-(defproject sq "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject findash "0.1.0-SNAPSHOT"
+  :description "Financial dashboard"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -14,6 +14,6 @@
                  [hiccup "1.0.5"]
                  [http-kit "2.1.16"]
                  [ring/ring-defaults "0.1.2"]]
-  :main ^:skip-aot sq.main
+  :main ^:skip-aot findash.main
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

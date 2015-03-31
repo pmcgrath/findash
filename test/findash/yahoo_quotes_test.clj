@@ -1,7 +1,7 @@
-(ns sq.yahoo-quotes-test
+(ns findash.yahoo-quotes-test
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [sq.yahoo-quotes :refer :all]))
+            [findash.yahoo-quotes :refer :all]))
 
 (deftest get-comma-separated-symbols-test
   (testing "Get comma sperated symbols - Single stock"

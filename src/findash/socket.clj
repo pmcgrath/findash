@@ -1,9 +1,9 @@
-(ns sq.socket
+(ns findash.socket
   (:require [clojure.core.async :refer [<! chan close! go-loop mult tap untap]]
             [clojure.tools.logging :as log]
             [compojure.core :refer :all]
             [org.httpkit.server :as httpkit]
-            [sq.json :as json]))
+            [findash.json :as json]))
 
 (def mult-quotes-ch (promise))
 
