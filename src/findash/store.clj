@@ -38,8 +38,7 @@
 
 (defn get-config
   []
-  @config
-)
+  @config)
 
 (defn get-currency-iso-alpha-codes
   []
@@ -47,13 +46,25 @@
 
 (defn get-latest-quotes
   []
-  (-> @latest-quotes sort vals)
-)
+  (-> @latest-quotes sort vals))
+
+(defn get-currency-pairs
+  []
+  (->> @config :currency-pairs (sort-by #(str (:from %) (:to %)))))
+
+(defn add-currency-pair
+  [new-currency-pair]
+  (let [from (:from new-currency-pair)
+        to (:to new-currency-pair)
+        matching-currency-pair (some #(and (= from (:from %)) ()  (= to (:to %))) (:currency-pairs @config))]
+    (if (nil? matching-currency-pair)
+      (do
+        (swap! config assoc :currency-pairs (conj (:currency-pairs @config) new-currency-pair))
+        true))))
 
 (defn get-stocks
   []
-  (sort-by :symbol (:stocks @config))
-)
+  (-> @config :stocks (sort-by :symbol)))
 
 (defn add-stock
   [new-stock]

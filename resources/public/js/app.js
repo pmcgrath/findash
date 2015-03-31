@@ -407,7 +407,7 @@
       this.setState({allowSubmission: false, isBeingSaved: true});
       var data = {from: this.state.from, to: this.state.to};
       this.props.ajax.postJsonData(
-        'api/rates',
+        'api/currencypairs',
         data,
         function(result) { this.setState(this.getInitialState()); }.bind(this),
         function(xhr)    { this.setState({allowSubmission: true, isBeingSaved: false, error: 'Save error : ' + xhr.status}); }.bind(this));

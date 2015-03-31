@@ -32,3 +32,20 @@
       (>!! new-quotes-ch quotes-update2)
       (is (= expected-final-quotes (get-latest-quotes)))
       (close! new-quotes-ch))))
+
+
+(deftest get-currency-pairs-test
+  (testing "Get currency pairs"
+    (let [eur-usd-pair {:from "EUR" :to "USD"}
+          usd-gbp-pair {:from "USD" :to "GBP"}
+          eur-aud-pair {:from "EUR" :to "AUD"}]
+      (init!)
+      ; 1 pair
+      (add-currency-pair eur-usd-pair)
+      (is (= [eur-usd-pair] (get-currency-pairs)) "First pair")
+      ; 2 pairs
+      (add-currency-pair usd-gbp-pair)
+      (is (= [eur-usd-pair usd-gbp-pair] (get-currency-pairs)) "Second pair")
+      ; 3 pairs
+      (add-currency-pair eur-aud-pair)
+      (is (= [eur-aud-pair eur-usd-pair usd-gbp-pair] (get-currency-pairs)) "Three pairs"))))
