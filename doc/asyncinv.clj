@@ -1,3 +1,7 @@
+
+
+
+
 ; go-loop terminate using an external atom
 (require '[clojure.core.async :refer [<!! <! go-loop]])
 (require '[clj-time.core :as time])
@@ -100,4 +104,44 @@
 (<!! (timeout 2000))
 (close! message-ch)
 
+
+
+
+
+; PubSub
+; http://yobriefca.se/blog/2014/06/04/publish-and-subscribe-with-core-dot-asyncs-pub-and-sub/
+; http://yobriefca.se/blog/2014/06/01/combining-and-controlling-channels-with-core-dot-asyncs-merge-and-mix/
+(require '[clojure.core.async :refer [<! >! chan close! go-loop pub sub timeout]])
+(require '[clj-time.core :as time])
+
+(def publisher (chan))
+
+(def publication
+  (pub publisher #(:topic %)))
+
+(def store-subscriber (chan))
+(def websocket-subscriber (chan))
+
+(sub publication :new-quotes store-subscriber)
+(sub publication :new-rates store-subscriber)
+(sub publication :new-quotes websocket-subscriber)
+(sub publication :new-rates websocket-subscriber)
+
+(defn run-subscriber [sub-ch identifier delay-ms]
+  (go-loop []
+    (let [data (<! sub-ch)]
+      (<! (timeout delay-ms))
+      (println identifier ": " data)
+      (recur))))
+
+(run-subscriber store-subscriber "store-subscriber" 20)
+(run-subscriber websocket-subscriber "websocket-subscriber" 40)
+
+;(go (>! publisher { :topic :new-quotes :quotes (time/now)}))
+
+;(go (>! publisher { :topic :new-ratest :rates (time/now)}))
+
+;(go (>! publisher { :topic :unknown :quotes (time/now)}))
+
+;(go (>! publisher { :topic :new-quotes :quotes (time/now)}))
 

@@ -158,7 +158,9 @@
       var existingQuotesIndex = this.state.quotes.reduce(
         function(accum, quote, index, array) { accum[quote.symbol] = quote; return accum; },
         {});
-      // Map the new quotes to a new collection, quotes with existing entries, have the new quote pushed into their existing prices array
+      // Map the new quotes to a new collection
+      // Will take care of both quotes with existing data and previously unseen quotes
+      // We maintain an array of prices for each symbol
       var updatedQuotes = newQuotes.map(
         function(newQuote, index, array) {
           if (existingQuotesIndex.hasOwnProperty(newQuote.symbol)) {
@@ -360,8 +362,66 @@
   });
 
   var Currencies = React.createClass({
+    mergeNewRatesUpdatingState: function(newRates) {
+      // Cater for no new rates
+      if (newRates === null || newRates.length === 0) {
+        // Do nothing 
+        return;
+      }
+      // Create map of existing rates - key is from+to and value is the existing rate
+      var existingRatesIndex = this.state.rates.reduce(
+        function(accum, rate, index, array) { accum[rate.from + rate.to] = rate; return accum; },
+        {});
+      // Map the new rates to a new collection
+      // Will take care of both rate with existing data and previously unseen rates
+      // We maintain an array of rates for each currency pair
+      var updatedRates = newRates.map(
+        function(newRate, index, array) {
+          if (existingRatesIndex.hasOwnProperty(newRate.from + newRate.to)) {
+            // Rate has existing entry - get last rate record
+            var matchingRate = existingRatesIndex[newRate.from + newRate.to];
+            var lastRate = matchingRate.rates[matchingRate.rates.length - 1];
+            if ((newRate.timestamp != lastRate.timestamp) || (newRate.rate != lastRate.rate)) {
+              // New rate is a change so add rate record
+              matchingRate.rates.push({timestamp: newRate.timestamp, rate: newQuote.rate});
+            }
+            existingRatesIndex[newRate.from + newRate.to] = null; // Bad side effect
+            return matchingRate;
+          }
+          // Has no existing record, so create new rate record
+          return {from: newRate.from, to: newRate.to, rates: [{timestamp: newRate.timestamp, rate: newRate.rate}]};
+        });
+      // For any existing rates that did not have matching new rate add those records
+      for (var existingRateKey in existingRatesIndex) {
+        var existingRate = existingRatesIndex[existingRateKey];
+        if (existingRate != null) { updatedRates.push(existingRate); }
+      }
+      this.setState({rates: updatedRates});
+    },
+    getInitialRates: function() {
+      this.props.ajax.getJsonData(
+        'api/rates',
+        function(rates)	{ this.mergeNewRatesUpdatingState(rates); }.bind(this),
+        function(xhr) 	{ console.log('getInitialRates error status : ' + xhr.status); });
+    },
+
+    subscribeForRateUpdates: function() {
+      this.props.socket.registerMessageHandler(
+        'rate-updates',
+        function(data) { this.mergeNewRatesUpdatingState(data.rates); }.bind(this));
+    },
+
     getInitialState: function() {
-      return {};
+      return {rates: []};
+    },
+
+    componentDidMount: function() {
+      this.getInitialRates();
+      this.subscribeForRateUpdates();
+    },
+
+    componentWillUnmount: function() {
+      this.props.socket.deregisterMessageHandler('rate-updates');
     },
     
     render: function() {
@@ -369,6 +429,7 @@
         <div className='currencies'>
           <h1>Currencies</h1>
           <AddRate currencies={this.props.currencies} ajax={ajax} />
+          <Rates rates={this.state.rates} />
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
         </div>
       );
@@ -428,6 +489,69 @@
           <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
           <span className='error'>{this.state.error}</span>
           <pre>{JSON.stringify(this.state, null, 2)}</pre>
+        </div>
+      );
+    }
+  });
+
+  var Rates = React.createClass({
+    render: function() {
+      var rateNodes = this.props.rates
+        .sort(function(rate1, rate2) { return (rate1.from + rate1.to).localeCompare((rate2.from + rate2.to)); })
+        .map(function(rate, index) { return (<Rate rate={rate} key={index} />); });
+      return (
+        <div className='rates'>
+          <div className='rate-list'>
+            <div className='rate-entry header'>
+              <div className='rate from'>From</div>
+              <div className='rate to'>To</div>
+              <div className='rate timestamp'>As of</div>
+              <div className='rate therate'>Rate</div>
+            </div>
+            {rateNodes}
+          </div>
+        </div>
+      );
+    }
+  });
+
+  var Rate = React.createClass({
+    determineLocaleDisplayTimestamp: function(rate) {
+      var timestamp = new Date(rate.timestamp);
+      var now = new Date();
+      if (timestamp.getUTCDate() != now.getUTCDate()) {
+        return timestamp.toLocaleString();
+      }
+      return timestamp.toLocaleTimeString();
+    },
+
+    determineRateMovementLabel: function(rate) {
+      if (rate.rates.length < 2) { return 'unchanged'; }
+      var movementValue = rate.rates[rate.rates.length - 1].rate - rate.rates[rate.rates.length - 2].rate;
+      if (movementValue < 0) { return 'down'; }
+      if (movementValue === 0) { return 'unchanged'; }
+      return 'up';
+    },
+
+    render: function() {
+      var rate = this.props.rate;
+      var latestRate = rate.rates[rate.rates.length - 1];
+      var localeTimestamp = this.determineLocaleDisplayTimestamp(latestRate);
+      var priceMovementLabel = this.determineRateMovementLabel(rate);
+      return (
+        <div className='rate-entry'>
+          <div className='rate from'>
+            {rate.from}
+          </div>
+          <div className='rate to'>
+            {rate.to}
+          </div>
+          <div className='rate timestamp'>
+            {localeTimestamp}
+          </div>
+          <div className={'rate therate ' + priceMovementLabel}>
+            {latestRate.rate}
+          </div>
         </div>
       );
     }

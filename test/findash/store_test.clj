@@ -1,5 +1,5 @@
 (ns findash.store-test
-  (:require [clojure.core.async :refer [>!! chan close!]]
+  (:require [clojure.core.async :refer [>!! <!! chan close! timeout]]
             [clojure.test :refer :all]
             [findash.store :refer :all]))
 
@@ -19,20 +19,40 @@
       (update-latest-quotes! quotes-update2)
       (is (= expected-quotes (get-latest-quotes))))))
 
-(deftest subscribe-for-quote-updates-test
-  (testing "Subscribe for quote updates - will add quotes to store on receiving new quotes"
-    (let [new-quotes-ch (chan)
+(deftest process-new-data-messages-test
+  (testing "Process new data messages - will add new quotes to store on receiving a new-quotes message"
+    (let [data-ch (chan)
           quotes-update1 [{:symbol "GOOG" :price 1.0} {:symbol "TED" :price 2}]
           quotes-update2 [{:symbol "AMD" :price 100.0} {:symbol "TED" :price 200}]
           expected-final-quotes [{:symbol "AMD" :price 100.0} {:symbol "GOOG" :price 1.0} {:symbol "TED" :price 200}]]
       (init!)
-      (subscribe-for-quote-updates new-quotes-ch)
-      (>!! new-quotes-ch quotes-update1)
+      (process-new-data-messages data-ch)
+      (>!! data-ch {:topic :new-quotes :quotes quotes-update1})
       (is (= quotes-update1 (get-latest-quotes)))
-      (>!! new-quotes-ch quotes-update2)
+      (>!! data-ch {:topic :new-quotes :quotes quotes-update2})
       (is (= expected-final-quotes (get-latest-quotes)))
-      (close! new-quotes-ch))))
+      (close! data-ch)))
 
+  (testing "Process new data messages - both new rates and new quotes"
+    (let [data-ch (chan)
+          quotes-update1 [{:symbol "GOOG" :price 1.0} {:symbol "TED" :price 2}]
+          rates-update1 [{:from "EUR" :to "GBP" :rate 2.0} {:from "USD" :to "EUR" :rate 1.0}]
+          quotes-update2 [{:symbol "AMD" :price 100.0} {:symbol "TED" :price 200}]
+          rates-update2 [{:from "EUR" :to "GBP" :rate 2.222222} {:from "EUR" :to "SEK" :rate 3.333333} {:from "USD" :to "EUR" :rate 1.111111}]
+          expected-final-quotes [{:symbol "AMD" :price 100.0} {:symbol "GOOG" :price 1.0} {:symbol "TED" :price 200}]
+          expected-final-rates [{:from "EUR" :to "GBP" :rate 2.222222} {:from "EUR" :to "SEK" :rate 3.333333} {:from "USD" :to "EUR" :rate 1.111111}]]
+      (init!)
+      (process-new-data-messages data-ch)
+      (>!! data-ch {:topic :new-quotes :quotes quotes-update1})
+      (is (= quotes-update1 (get-latest-quotes)))
+      (>!! data-ch {:topic :new-rates :rates rates-update1})
+      (<!! (timeout 20)) ;; Slow down for initial creation of the storage atom
+      (is (= rates-update1 (get-latest-rates)))
+      (>!! data-ch {:topic :new-quotes :quotes quotes-update2})
+      (is (= expected-final-quotes (get-latest-quotes)))
+      (>!! data-ch {:topic :new-rates :rates rates-update2})
+      (is (= expected-final-rates (get-latest-rates)))
+      (close! data-ch))))
 
 (deftest get-currency-pairs-test
   (testing "Get currency pairs"

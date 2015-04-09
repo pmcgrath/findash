@@ -5,20 +5,31 @@
             [org.httpkit.server :as httpkit]
             [findash.json :as json]))
 
-(def mult-quotes-ch (promise))
+(def create-new-data-sub-fn (promise))
 
-(defn web-socket-re-publish-quote-updates
-  [uuid channel quotes-sub-ch]
+(defn create-web-socket-message
+  [uuid data]
+  (let [topic (:topic data)]
+    (if (= topic :new-quotes)
+      {:uuid uuid :messageType "quote-updates" :quotes (:quotes data)}
+      (if (= topic :new-rates)
+        {:uuid uuid :messageType "rate-updates" :rates (:rates data)}
+        nil))))
+
+(defn web-socket-re-publish-updates
+  [uuid channel client-sub-ch]
   (go-loop []
-    (if-let [quotes (<! quotes-sub-ch)]
-      (do
-        (log/info "-----> About to send " uuid " got quotes " quotes)
-        (httpkit/send! channel (json/generate-string (assoc {:uuid uuid "messageType" "quote-updates"} :quotes quotes)))
+    (if-let [data (<! client-sub-ch)]
+      (do 
+        (let [message (create-web-socket-message uuid data)]
+          (when message
+            (log/info "-----> About to send message for" uuid " type is " (:messageType message))
+            (httpkit/send! channel (json/generate-string message))))
         (recur)))))
 
 (defn web-socket-on-close
-  [uuid quotes-sub-ch status]
-  (close! quotes-sub-ch)
+  [uuid client-sub-ch status]
+  (close! client-sub-ch)
   (log/info uuid " web socket closed: " status))
 
 (defn web-socket-on-receive
@@ -28,14 +39,13 @@
 (defn handler 
   [request]
   (let [uuid (str (java.util.UUID/randomUUID))
-        quotes-sub-ch (chan)]
+        client-sub-ch (@create-new-data-sub-fn)]
     (log/info uuid " web socket opened")
-    (tap @mult-quotes-ch quotes-sub-ch)
     (httpkit/with-channel request channel
-      (web-socket-re-publish-quote-updates uuid channel quotes-sub-ch)
-      (httpkit/on-close channel (partial web-socket-on-close uuid quotes-sub-ch))
+      (web-socket-re-publish-updates uuid channel client-sub-ch)
+      (httpkit/on-close channel (partial web-socket-on-close uuid client-sub-ch))
       (httpkit/on-receive channel (partial web-socket-on-receive uuid channel)))))
 
 (defn init! 
-  [in-mult-quotes-ch]
-  (deliver mult-quotes-ch in-mult-quotes-ch))
+  [in-create-new-data-sub-fn]
+  (deliver create-new-data-sub-fn in-create-new-data-sub-fn))

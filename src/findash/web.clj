@@ -43,6 +43,10 @@
   [request]
   {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-latest-quotes))})
 
+(defn get-rates-service-handler
+  [request]
+  {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-latest-rates))})
+
 (defn get-stocks-service-handler
   [request]
   {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-stocks))})
@@ -64,6 +68,7 @@
     (GET "/currencypairs" request get-currency-pairs-service-handler)
     (POST "/currencypairs" request add-currency-pair-service-handler)
     (GET "/quotes" request get-quotes-service-handler)
+    (GET "/rates" request get-rates-service-handler)
     (GET "/stocks" request get-stocks-service-handler)
     (POST "/stocks" request add-stock-service-handler))
   (GET "/ws" request socket/handler)
@@ -75,6 +80,6 @@
     handler/site))
 
 (defn start 
-  [port mult-latest-quotes-ch]
-  (socket/init! mult-latest-quotes-ch)
+  [port create-new-data-sub-fn]
+  (socket/init! create-new-data-sub-fn)
   (httpkit/run-server app {:port port}))

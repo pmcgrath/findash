@@ -1,5 +1,5 @@
 (ns findash.hub
-  (:require [clojure.core.async :refer [chan mult]]))
+  (:require [clojure.core.async :refer [chan pub sub]]))
 
 (def ^:private store (atom {}))
 
@@ -7,10 +7,16 @@
   [key]
   (get @store key))
 
+(defn create-new-data-subscriber
+  [& topics]
+  (let [publication (get-item :new-data-publication)
+        sub-ch (chan)]
+    (doseq [topic topics]
+      (sub publication topic sub-ch))
+    sub-ch))
+
 (defn start
   []
-  ; Create channels
-  (swap! store assoc :new-quotes-ch (chan))
-  
-  ; Create mult channels so we can tap 
-  (swap! store assoc :mult-new-quotes-ch (mult (:new-quotes-ch @store))))
+  (let [new-data-pub-ch (chan)
+        new-data-publication (pub new-data-pub-ch #(:topic %))]  
+    (reset! store {:new-data-pub-ch new-data-pub-ch :new-data-publication new-data-publication})))

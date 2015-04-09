@@ -27,12 +27,12 @@
 
 (deftest parse-raw-test
   (testing "Parse raw quote"
-    (let [raw {"resource" {"classname" "Quote" "fields" { "name" "RYANAIR HOLDINGS" "price" "10.510000" "symbol" "RY4B.IR" "ts" "1425987348" "type" "equity" "utctime" "2015-03-10T11:35:48+0000" "volume" "601599"}}}
+    (let [raw {:resource {:classname "Quote" :fields { :name "RYANAIR HOLDINGS" :price "10.510000" :symbol "RY4B.IR" :ts "1425987348" :type "equity" :utctime "2015-03-10T11:35:48+0000" :volume "601599"}}}
           quote (parse-raw raw)]
       (is (= {:symbol "RY4B.IR" :price 10.51 :timestamp (time/date-time 2015 3 10 11 35 48)} quote))))
 
   (testing "Parse raw quote"
-    (let [raw {"resource" {"classname" "Quote" "fields" { "name" "RYANAIR HOLDINGS" "price" "10.510000" "symbol" "RY4B.IR" "ts" "1425987348" "type" "equity" "utctime" "2015-03-10T11:35:48+0000" "volume" "601599"}}}
+    (let [raw {:resource {:classname "Quote" :fields { :name "RYANAIR HOLDINGS" :price "10.510000" :symbol "RY4B.IR" :ts "1425987348" :type "equity" :utctime "2015-03-10T11:35:48+0000" :volume "601599"}}}
           quote (parse-raw raw)]
       (is (= {:symbol "RY4B.IR" :price 10.51 :timestamp (time/date-time 2015 3 10 11 35 48)} quote)))))
 
@@ -40,8 +40,8 @@
   (testing "Acquire - This depends on a connection to yahoo"
     (let [config {:refresh-interval-seconds 1 :stocks [{:symbol "GOOG"} {:symbol "TSCO.L"}]}
           quotes (acquire config)
-          find-match (fn [coll symbol] (some (fn [q] (if (= (:symbol q) symbol) q)) coll))
-          goog-quote (find-match quotes "GOOG")
-          tsco-quote (find-match quotes "TSCO.L")]
+          find-match-fn (fn [coll symbol] (some (fn [q] (if (= (:symbol q) symbol) q)) coll))
+          goog-quote (find-match-fn quotes "GOOG")
+          tsco-quote (find-match-fn quotes "TSCO.L")]
       (is (not (nil? goog-quote)) "goog code")
       (is (not (nil? tsco-quote)) "tsco code"))))

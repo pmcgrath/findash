@@ -82,3 +82,40 @@ body {
 
 .add-rate-button {
 }
+
+.rate-list {
+  display: flex;                   /* Flex style */
+  flex-flow: column;               /* Stack children - block style */
+}
+
+.rate-entry {
+  display: flex;                  /* Reset flex style so we have a new parent containe rin this context */
+}
+
+.rate-entry.header {
+  background-color: grey;
+}
+
+.rate.from {
+  flex: 1;
+}
+
+.rate.to {
+  flex: 1;
+}
+
+.rate.timestamp {
+  flex: 3;
+}
+
+.rate.therate {
+  flex: 1;
+}
+
+.rate.therate.down {
+  color: red;
+}
+
+.rate.therate.up {
+  color: green;
+}

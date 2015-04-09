@@ -1,8 +1,9 @@
 (ns findash.main
-  (:require [clojure.core.async :refer [<!! chan tap]]
+  (:require [clojure.core.async :refer [<! go]]
             [clojure.tools.logging :as log]
             [findash.hub :as hub]
             [findash.quotes-watcher :as quotes-watcher]
+            [findash.rates-watcher :as rates-watcher]
             [findash.store :as store]
             [findash.web :as web])
   (:gen-class))
@@ -15,24 +16,26 @@
   (hub/start)
 
   (log/info "Starting store")
-  (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
-        new-quotes-sub-ch (chan)
-        _ (tap mult-new-quotes-ch new-quotes-sub-ch)] 
-    (store/start new-quotes-sub-ch))
+  (let [new-data-sub-ch (hub/create-new-data-subscriber :new-quotes :new-rates)] 
+    (store/start new-data-sub-ch))
  
   (log/info "Starting web app")
-  (let [config (store/get-config)
-        mult-quotes-ch (hub/get-item :mult-new-quotes-ch)] 
-    (web/start (:port config) mult-quotes-ch))
-  
+  (let [config (store/get-config)]
+    (web/start (:port config) (partial hub/create-new-data-subscriber :new-quotes :new-rates)))
+
   (log/info "Starting quotes watcher")
   (let [get-config-fn store/get-config
-        new-quotes-pub-ch (hub/get-item :new-quotes-ch)] 
-    (quotes-watcher/start get-config-fn new-quotes-pub-ch))
+        new-data-pub-ch (hub/get-item :new-data-pub-ch)] 
+    (quotes-watcher/start get-config-fn new-data-pub-ch))
 
-  (log/info "Starting TEMP local quotes logger")
-  (let [mult-new-quotes-ch (hub/get-item :mult-new-quotes-ch) 
-        new-quotes-ch (tap mult-new-quotes-ch (chan))] 
-    (while true 
-      (let [quotes (<!! new-quotes-ch)]
-        (log/info "!!!!TEMP Got quotes [" quotes "]")))))
+  (log/info "Starting rates watcher")
+  (let [get-config-fn store/get-config
+        new-data-pub-ch (hub/get-item :new-data-pub-ch)] 
+    (rates-watcher/start get-config-fn new-data-pub-ch))
+  
+  (log/info "Starting TEMP local logger")
+  (let [new-data-sub-ch (hub/create-new-data-subscriber :new-quotes :new-rates)] 
+    (go
+      (while true 
+        (let [data (<! new-data-sub-ch)]
+          (log/info "!!!!TEMP Got [" data "]"))))))
