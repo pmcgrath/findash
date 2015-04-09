@@ -21,7 +21,7 @@
  
   (log/info "Starting web app")
   (let [config (store/get-config)]
-    (web/start (:port config) (partial hub/create-new-data-subscriber :new-quotes :new-rates)))
+    (web/start (partial hub/create-new-data-subscriber :new-quotes :new-rates)))
 
   (log/info "Starting quotes watcher")
   (let [get-config-fn store/get-config
