@@ -1,8 +1,8 @@
 (ns findash.json-test
   (:require [clj-time.core :as time]
             [clojure.test :refer :all]
-            [ring.util.io :as io]
-            [findash.json :refer :all]))
+            [findash.json :refer :all]
+            [ring.util.io :as io]))
 
 (deftest generate-string-test
   (testing "Generate string"

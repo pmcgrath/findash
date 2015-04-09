@@ -3,12 +3,11 @@
             [compojure.core :refer :all]
             [compojure.handler :as handler]
             [compojure.route :as route]
-            [hiccup.page :as page]
-            [environ.core :refer [env]]
-            [org.httpkit.server :as httpkit]
             [findash.json :as json]
             [findash.socket :as socket]
-            [findash.store :as store]))
+            [findash.store :as store]
+            [hiccup.page :as page]
+            [org.httpkit.server :as httpkit]))
 
 (defn get-home-page-handler
   [request]
@@ -83,5 +82,5 @@
 (defn start 
   [port1 create-new-data-sub-fn]
   (socket/init! create-new-data-sub-fn)
-  (let [port (Integer. (env :port))]
+  (let [port (Integer. (or (System/getenv "PORT") "5000"))]
     (httpkit/run-server app {:port port})))

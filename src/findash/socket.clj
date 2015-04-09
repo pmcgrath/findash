@@ -2,8 +2,8 @@
   (:require [clojure.core.async :refer [<! chan close! go-loop mult tap untap]]
             [clojure.tools.logging :as log]
             [compojure.core :refer :all]
-            [org.httpkit.server :as httpkit]
-            [findash.json :as json]))
+            [findash.json :as json]
+            [org.httpkit.server :as httpkit]))
 
 (def create-new-data-sub-fn (promise))
 
