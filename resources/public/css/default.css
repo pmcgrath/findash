@@ -19,6 +19,7 @@ body {
 .stocks {
   display: block;                   /* Reset syle */
   flex: 1;
+  padding: 2px;
 }
 
 .add-stock {
@@ -75,6 +76,7 @@ body {
 .currencies {
   display: block;                   /* Reset syle */
   flex: 1;
+  padding: 2px;
 }
 
 .add-rate {

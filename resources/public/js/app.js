@@ -127,6 +127,7 @@
       var baseUrl = window.location.protocol + '//' + window.location.host + '/';
       var socketUrl = baseUrl.replace('http', 'ws') + 'ws'; // Takes care of http->ws and https->wss 
       return {
+        displayState: false,
         baseUrl: baseUrl,
         socketUrl: socketUrl,
       };
@@ -140,8 +141,8 @@
     render: function() {
       return (
         <div className="app">
-          <Stocks currencies={this.state.currencies} ajax={this.state.ajax} socket={this.props.socket} />
-          <Currencies currencies={this.state.currencies} ajax={this.state.ajax} socket={this.props.socket} />
+          <Stocks currencies={this.state.currencies} displayState={this.props.displayState} ajax={this.state.ajax} socket={this.props.socket} />
+          <Currencies currencies={this.state.currencies} displayState={this.props.displayState} ajax={this.state.ajax} socket={this.props.socket} />
         </div>
       );
     }
@@ -212,12 +213,13 @@
     },
 
     render: function() {
+      var displayState = (this.props.displayState) ? JSON.stringify(this.state, null, 2) : "";
       return (
         <div className='stocks'>
           <h1>Quotes</h1>
-          <AddStock currencies={this.props.currencies} ajax={ajax} />
+          <AddStock currencies={this.props.currencies} displayState={this.props.displayState} ajax={ajax} />
           <Quotes quotes={this.state.quotes} />
-          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+          <pre>{displayState}</pre>
         </div>
       );
     }
@@ -268,6 +270,7 @@
     },
 
     render: function() {
+      var displayState = (this.props.displayState) ? JSON.stringify(this.state, null, 2) : "";
       return (
         <div className='add-stock'>
           <form onSubmit={this.handleSubmit}>
@@ -276,8 +279,8 @@
             <input className='add-stock-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
           <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
-          <span className='error'>{this.state.error}</span>
-          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+          &nbsp;<span className='error'>{this.state.error}</span>
+          <pre>{displayState}</pre>
         </div>
       );
     }
@@ -398,6 +401,7 @@
       }
       this.setState({rates: updatedRates});
     },
+
     getInitialRates: function() {
       this.props.ajax.getJsonData(
         'api/rates/latest',
@@ -425,12 +429,13 @@
     },
     
     render: function() {
+      var displayState = (this.props.displayState) ? JSON.stringify(this.state, null, 2) : "";
       return (
         <div className='currencies'>
           <h1>Currencies</h1>
-          <AddRate currencies={this.props.currencies} ajax={ajax} />
+          <AddRate currencies={this.props.currencies} displayState={this.props.displayState} ajax={ajax} />
           <Rates rates={this.state.rates} />
-          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+          <pre>{displayState}</pre>
         </div>
       );
     }
@@ -479,6 +484,7 @@
     },
 
     render: function() {
+      var displayState = (this.props.displayState) ? JSON.stringify(this.state, null, 2) : "";
       return (
         <div className='add-rate'>
           <form onSubmit={this.handleSubmit}>
@@ -487,8 +493,8 @@
             <input className='add-rate-button' type='submit' value='Add' disabled={!this.state.allowSubmission} />
           </form>
           <image className={'saving-image ' + this.state.isBeingSaved} src='/images/ajax-loader.gif' />
-          <span className='error'>{this.state.error}</span>
-          <pre>{JSON.stringify(this.state, null, 2)}</pre>
+          &nbsp;<span className='error'>{this.state.error}</span>
+          <pre>{displayState}</pre>
         </div>
       );
     }
@@ -558,7 +564,7 @@
   });
 
   React.render(
-    <App ajax={ajax} socket={socket} />,
+    <App displayState={false} ajax={ajax} socket={socket} />,
     document.getElementById('content')
   );
 })();
