@@ -3,16 +3,18 @@
             [findash.ref-data :as ref-data]))
 
 (def ^:private default-config { 
-  :refresh-interval-seconds 5 
+  :refresh-interval-seconds 5 })
+
+(def ^:private prepopulated-default-config { 
+  :refresh-interval-seconds 5
   :stocks [
     {:symbol "RY4B.IR" :currency "EUR"} 
     {:symbol "LLOY.L" :currency "GBP"}
     {:symbol "TSCO.L" :currency "GBP"}
     {:symbol "GOOG" :currency "USD"}
-    {:symbol "MSFT" :currency "USD"}]})
-
-;  :currency-pairs [
-;    {:from "USD" :to "EUR"}]}) 
+    {:symbol "MSFT" :currency "USD"}]
+  :currency-pairs [
+    {:from "USD" :to "EUR"}]}) 
 
 (def ^:private config (atom {}))
 (def ^:private latest-quotes (atom {}))

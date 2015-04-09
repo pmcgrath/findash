@@ -35,7 +35,8 @@
   
   (log/info "Starting TEMP local logger")
   (let [new-data-sub-ch (hub/create-new-data-subscriber :new-quotes :new-rates)] 
-    (go
+    (go 
       (while true 
         (let [data (<! new-data-sub-ch)]
-          (log/info "!!!!TEMP Got [" data "]"))))))
+          (log/info "UPDATED WITH [" (:topic data) "]")
+          (log/debug "DATA IS [" data "]"))))))

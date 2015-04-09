@@ -9,6 +9,7 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/tools.logging "0.3.1"]
+                 [ch.qos.logback/logback-classic "1.1.1"]  
                  [cheshire "5.4.0"]
                  [clj-time "0.8.0"]  
                  [compojure "1.3.1"]

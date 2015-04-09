@@ -187,7 +187,7 @@
 
     getInitialQuotes: function() {
       this.props.ajax.getJsonData(
-        'api/quotes',
+        'api/quotes/latest',
         function(quotes) { this.mergeNewQuotesUpdatingState(quotes); }.bind(this),
         function(xhr)    { console.log('getInitialQuotes error status : ' + xhr.status); });
     },
@@ -400,7 +400,7 @@
     },
     getInitialRates: function() {
       this.props.ajax.getJsonData(
-        'api/rates',
+        'api/rates/latest',
         function(rates)	{ this.mergeNewRatesUpdatingState(rates); }.bind(this),
         function(xhr) 	{ console.log('getInitialRates error status : ' + xhr.status); });
     },

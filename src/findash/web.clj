@@ -39,11 +39,11 @@
       {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string currency-pair)}
       {:status 409 :headers {"Content-Type" "application/json"} :body (json/generate-string (assoc currency-pair :error "Conflict, stock appears to already exist"))})))
 
-(defn get-quotes-service-handler
+(defn get-latest-quotes-service-handler
   [request]
   {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-latest-quotes))})
 
-(defn get-rates-service-handler
+(defn get-latest-rates-service-handler
   [request]
   {:status 200 :headers {"Content-Type" "application/json"} :body (json/generate-string (store/get-latest-rates))})
 
@@ -67,8 +67,8 @@
     (GET "/currencies" request get-currencies-service-handler)
     (GET "/currencypairs" request get-currency-pairs-service-handler)
     (POST "/currencypairs" request add-currency-pair-service-handler)
-    (GET "/quotes" request get-quotes-service-handler)
-    (GET "/rates" request get-rates-service-handler)
+    (GET "/quotes/latest" request get-latest-quotes-service-handler)
+    (GET "/rates/latest" request get-latest-rates-service-handler)
     (GET "/stocks" request get-stocks-service-handler)
     (POST "/stocks" request add-stock-service-handler))
   (GET "/ws" request socket/handler)

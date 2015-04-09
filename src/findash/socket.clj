@@ -23,24 +23,24 @@
       (do 
         (let [message (create-web-socket-message uuid data)]
           (when message
-            (log/info "-----> About to send message for" uuid " type is " (:messageType message))
+            (log/info "About to send web socket message for" uuid "message type is" (:messageType message))
             (httpkit/send! channel (json/generate-string message))))
         (recur)))))
 
 (defn web-socket-on-close
   [uuid client-sub-ch status]
   (close! client-sub-ch)
-  (log/info uuid " web socket closed: " status))
+  (log/info uuid "web socket closed:" status))
 
 (defn web-socket-on-receive
   [uuid channel data]
-  (log/info uuid " web socket received: " data))
+  (log/info uuid "web socket received:" data))
 
 (defn handler 
   [request]
   (let [uuid (str (java.util.UUID/randomUUID))
         client-sub-ch (@create-new-data-sub-fn)]
-    (log/info uuid " web socket opened")
+    (log/info uuid "web socket opened")
     (httpkit/with-channel request channel
       (web-socket-re-publish-updates uuid channel client-sub-ch)
       (httpkit/on-close channel (partial web-socket-on-close uuid client-sub-ch))

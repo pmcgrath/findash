@@ -14,7 +14,7 @@
     (let [config (get-config-fn)
           stocks-count (count (:stocks config))
           pause-interval (* (:refresh-interval-seconds config) 1000)]
-      (log/info "About to get and pub quotes, count is " stocks-count) 
+      (log/info "About to get and pub quotes, count is" stocks-count) 
       ; If stocks exist, get quotes and put quotes on pub channel, then pause
       (when (or (= stocks-count 0) 
                 (>! pub-ch {:topic :new-quotes :quotes (acquirer-fn config)}))
