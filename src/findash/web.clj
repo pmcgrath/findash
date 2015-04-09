@@ -82,4 +82,4 @@
 (defn start 
   [port create-new-data-sub-fn]
   (socket/init! create-new-data-sub-fn)
-  (httpkit/run-server app {:port port}))
+  (httpkit/run-server app))
