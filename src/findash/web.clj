@@ -80,6 +80,7 @@
     handler/site))
 
 (defn start 
-  [port create-new-data-sub-fn]
+  [port1 create-new-data-sub-fn]
   (socket/init! create-new-data-sub-fn)
-  (httpkit/run-server app))
+  (let [port (Integer. (env :port))]
+    (httpkit/run-server app {:port port})))
