@@ -3,7 +3,7 @@
             [findash.ref-data :as ref-data]))
 
 (def ^:private default-config { 
-  :port 3000
+  :port 443
   :refresh-interval-seconds 5 
   :stocks [
     {:symbol "RY4B.IR" :currency "EUR"} 
