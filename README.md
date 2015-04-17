@@ -14,6 +14,7 @@ The following are some of the features
 - Can I create a watcher abstraction.
 - Figure out server side error handling, i.e. doesn't cater for failed data retrieval, can I use a clojure circuit breaker ? 
 - Figure out deployment issues - profiles, environments, ubjerjar etc.
+- Figure out a workflow for the react jsx transformation.
 - Deploy on heroku.
 - Use Stuart Sierra's component - Still trying to grok state in a clojure app.
 - Switch all client interactions to just using web sockets alone.
